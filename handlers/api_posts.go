@@ -12,9 +12,26 @@ import (
 )
 
 func ApiGetPosts(c *fiber.Ctx) error {
+	// Dukungan pagination untuk mencegah load seluruh tabel sekaligus
+	limit := c.QueryInt("limit", 50)
+	offset := c.QueryInt("offset", 0)
+	if limit <= 0 || limit > 100 {
+		limit = 50
+	}
+	if offset < 0 {
+		offset = 0
+	}
+
+	var total int64
+	database.DB.Model(&models.Post{}).Count(&total)
+
 	var posts []models.Post
 
-	if err := database.DB.Preload("Category").Preload("Tags").Preload("Author").Find(&posts).Error; err != nil {
+	if err := database.DB.Preload("Category").Preload("Tags").Preload("Author").
+		Order("created_at desc").
+		Limit(limit).
+		Offset(offset).
+		Find(&posts).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"success": false,
 			"message": "Gagal mengambil data artikel",
@@ -24,6 +41,9 @@ func ApiGetPosts(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"success": true,
 		"data":    posts,
+		"total":   total,
+		"limit":   limit,
+		"offset":  offset,
 	})
 }
 

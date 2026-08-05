@@ -2,6 +2,7 @@
 package handlers
 
 import (
+	"math"
 	"strconv"
 
 	"go-lightblog/database"
@@ -12,8 +13,20 @@ import (
 )
 
 func ListPosts(c *fiber.Ctx) error {
+	page := c.QueryInt("page", 1)
+	if page < 1 {
+		page = 1
+	}
+	limit := 20
+	offset := (page - 1) * limit
+
+	var totalPosts int64
+	database.DB.Model(&models.Post{}).Count(&totalPosts)
+
 	var posts []models.Post
-	database.DB.Order("created_at desc").Find(&posts)
+	database.DB.Order("created_at desc").Limit(limit).Offset(offset).Find(&posts)
+
+	totalPages := int(math.Ceil(float64(totalPosts) / float64(limit)))
 
 	su := utils.GetSessionUser(c)
 	return c.Render("dashboard/posts_list", fiber.Map{
@@ -21,6 +34,12 @@ func ListPosts(c *fiber.Ctx) error {
 		"HeaderTitle": "Manajemen Postingan",
 		"ActiveMenu":  "posts",
 		"Posts":       posts,
+		"CurrentPage": page,
+		"TotalPages":  totalPages,
+		"HasPrev":     page > 1,
+		"HasNext":     page < totalPages,
+		"PrevPage":    page - 1,
+		"NextPage":    page + 1,
 		"UserName":    su.UserName,
 		"UserRole":    su.UserRole,
 	}, "layouts/main")

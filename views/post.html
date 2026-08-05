@@ -20,7 +20,7 @@
     <!-- Meta Info (Penulis & Tanggal) -->
     <div class="d-flex align-items-center mb-4 text-muted small">
         <div class="bg-secondary text-white rounded-circle d-flex justify-content-center align-items-center me-2 author-avatar">
-            {{slice .Post.Author.Name 0 1}}
+            {{if .Post.Author.Name}}{{slice .Post.Author.Name 0 1}}{{else}}?{{end}}
         </div>
         <div>
             <span class="fw-bold text-dark">{{.Post.Author.Name}}</span> &nbsp;&middot;&nbsp; 

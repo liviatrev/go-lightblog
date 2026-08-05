@@ -87,16 +87,18 @@ func ProcessUpdatePassword(c *fiber.Ctx) error {
 		return c.Redirect("/settings?msg=error_db")
 	}
 
+	currentToken := models.GetSetting(database.DB, "login_token", "admin")
 	newToken := c.FormValue("loginToken")
 	if newToken != "" {
 		database.DB.Save(&models.Setting{
 			Key:   "login_token",
 			Value: newToken,
 		})
+		currentToken = newToken
 	}
 
 	su.Session.Destroy()
-	return c.Redirect("/login-" + newToken)
+	return c.Redirect("/login-" + currentToken)
 }
 
 func ProcessUpdateIntegrations(c *fiber.Ctx) error {

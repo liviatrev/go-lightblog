@@ -6,6 +6,7 @@ import (
 	"html/template"
 	"log"
 	"strings"
+	"time"
 
 	"go-lightblog/config"
 	"go-lightblog/database"
@@ -42,7 +43,7 @@ func main() {
 	// Tambahkan Fungsi Kustom (Bisa dipanggil di HTML)
 	engine.AddFunc("thumb", func(url string, width int) string {
 		if url == "" {
-			return "/assets/default-cover.jpg" // URL gambar default jika pos tidak punya kover
+			return "/public/assets/default-cover.jpg" // URL gambar default jika pos tidak punya kover
 		}
 		
 		// Skenario 1: Jika gambar berasal dari ImageKit CDN
@@ -62,7 +63,7 @@ func main() {
 	app := fiber.New(fiber.Config{
 		Views:       engine,
 		AppName:     "go-lightblog",
-		IdleTimeout: 10, // Optimasi ringan untuk manajemen koneksi
+		IdleTimeout: 10 * time.Second, // Optimasi ringan untuk manajemen koneksi
 	})
 
 	// Daftarkan middleware secara global di sini

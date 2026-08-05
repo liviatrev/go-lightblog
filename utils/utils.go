@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
+	"image"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -76,7 +77,8 @@ func GenerateUniqueSlug(title string, excludeID ...uint) string {
 
 	query.Count(&count)
 	if count > 0 {
-		slug = slug + "-" + time.Now().Format("150405")
+		// Tambahkan timestamp + suffix acak agar tidak bentrok saat dibuat dalam detik yang sama
+		slug = slug + "-" + time.Now().Format("150405") + "-" + GenerateRandomHex(2)
 	}
 	return slug
 }
@@ -185,8 +187,15 @@ func ProcessUpload(c *fiber.Ctx, formField string) (string, error) {
 		return "", err
 	}
 
-	originalFilename := fileHeader.Filename
-	ext := filepath.Ext(originalFilename)
+	originalFilename := SanitizeFilename(fileHeader.Filename)
+	ext := strings.ToLower(filepath.Ext(originalFilename))
+
+	// Hanya izinkan tipe gambar raster untuk mencegah upload file berbahaya
+	// (mis. HTML/SVG yang bisa dieksekusi saat disajikan dari folder statis)
+	if !isAllowedImageExt(ext) {
+		return "", fmt.Errorf("tipe file tidak diizinkan")
+	}
+
 	nameOnly := strings.TrimSuffix(originalFilename, ext)
 	timestamp := strconv.FormatInt(time.Now().Unix(), 10)
 	filename := fmt.Sprintf("%s_%s%s", nameOnly, timestamp, ext)
@@ -234,6 +243,34 @@ func ProcessUpload(c *fiber.Ctx, formField string) (string, error) {
 	return resp.URL, nil
 }
 
+// SanitizeFilename membersihkan nama file upload dari path traversal dan karakter berbahaya.
+func SanitizeFilename(name string) string {
+	// Normalisasi path Windows lalu ambil komponen file saja
+	base := filepath.Base(strings.ReplaceAll(name, "\\", "/"))
+	// Hapus karakter kontrol / separator yang tersisa
+	base = strings.Map(func(r rune) rune {
+		switch r {
+		case '/', '\\', '\x00', '\n', '\r':
+			return -1
+		}
+		return r
+	}, base)
+	base = strings.TrimSpace(base)
+	if base == "" || base == "." || base == ".." {
+		return "upload"
+	}
+	return base
+}
+
+// isAllowedImageExt memeriksa apakah ekstensi file termasuk daftar gambar raster yang diizinkan.
+func isAllowedImageExt(ext string) bool {
+	switch ext {
+	case ".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp":
+		return true
+	}
+	return false
+}
+
 // ============================================================
 // 7. IMAGE PROCESSING / THUMBNAIL HELPERS
 // ============================================================
@@ -247,9 +284,34 @@ func ResizeAndCacheThumbnail(src string, w int) (string, error) {
 	}
 
 	localPath := "." + src
-	fileName := filepath.Base(localPath)
+
+	// Mencegah OOM: batasi ukuran gambar sumber (decompression bomb guard)
+	f, err := os.Open(localPath)
+	if err != nil {
+		return "", fmt.Errorf("gambar asli tidak ditemukan")
+	}
+	cfg, _, err := image.DecodeConfig(f)
+	f.Close()
+	if err != nil {
+		return "", fmt.Errorf("format gambar tidak didukung")
+	}
+	const maxSourceDim = 8000
+	if cfg.Width <= 0 || cfg.Height <= 0 || cfg.Width > maxSourceDim || cfg.Height > maxSourceDim {
+		return "", fmt.Errorf("gambar terlalu besar")
+	}
+
+	// Mencegah OOM: batasi lebar thumbnail yang diminta (0 < w <= 2000)
+	if w <= 0 {
+		w = 600
+	}
+	if w > 2000 {
+		w = 2000
+	}
+
+	base := strings.TrimSuffix(filepath.Base(localPath), filepath.Ext(localPath))
 	thumbDir := "./public/uploads/thumbs"
-	thumbPath := fmt.Sprintf("%s/w%d_%s", thumbDir, w, fileName)
+	// Selalu gunakan ekstensi .jpg karena output dikodekan sebagai JPEG
+	thumbPath := fmt.Sprintf("%s/w%d_%s.jpg", thumbDir, w, base)
 
 	// 1. Cek Cache
 	if _, err := os.Stat(thumbPath); err == nil {
@@ -257,22 +319,43 @@ func ResizeAndCacheThumbnail(src string, w int) (string, error) {
 	}
 
 	// 2. Buka gambar asli
-	img, err := imaging.Open(localPath)
+	imgFile, err := os.Open(localPath)
 	if err != nil {
 		return "", fmt.Errorf("gambar asli tidak ditemukan")
 	}
+	defer imgFile.Close()
+	img, err := imaging.Decode(imgFile, imaging.AutoOrientation(true))
+	if err != nil {
+		return "", fmt.Errorf("format gambar tidak didukung")
+	}
 
 	// 3. Buat folder thumbs jika belum ada
-	os.MkdirAll(thumbDir, 0755)
+	if err := os.MkdirAll(thumbDir, 0755); err != nil {
+		return "", fmt.Errorf("gagal menyimpan thumbnail")
+	}
 
 	// 4. Resize dengan algoritma Lanczos
 	resizedImg := imaging.Resize(img, w, 0, imaging.Lanczos)
 
-	// 5. Simpan thumbnail dengan kompresi JPEG 70%
-	err = imaging.Save(resizedImg, thumbPath, imaging.JPEGQuality(70))
+	// 5. Simpan ke file sementara lalu rename agar aman dari race
+	// (dua request bersamaan untuk thumbnail yang sama tidak saling merusak)
+	tmp, err := os.CreateTemp(thumbDir, "thumb-*.tmp")
 	if err != nil {
 		return "", fmt.Errorf("gagal menyimpan thumbnail")
 	}
+	tmpName := tmp.Name()
+	encodeErr := imaging.Encode(tmp, resizedImg, imaging.JPEG, imaging.JPEGQuality(70))
+	closeErr := tmp.Close()
+	if encodeErr != nil || closeErr != nil {
+		os.Remove(tmpName)
+		return "", fmt.Errorf("gagal menyimpan thumbnail")
+	}
+	if err := os.Rename(tmpName, thumbPath); err != nil {
+		os.Remove(tmpName)
+		return "", fmt.Errorf("gagal menyimpan thumbnail")
+	}
+	// Pastikan thumbnail dapat dibaca oleh proses lain (mis. reverse proxy)
+	os.Chmod(thumbPath, 0644)
 
 	return thumbPath, nil
 }

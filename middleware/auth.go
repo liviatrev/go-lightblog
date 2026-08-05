@@ -38,8 +38,8 @@ func RequireAdmin(c *fiber.Ctx) error {
 	}
 
 	// Pastikan role-nya adalah admin
-	role := sess.Get("role")
-	if role == nil || role.(string) != "admin" {
+	role, ok := sess.Get("role").(string)
+	if !ok || role != "admin" {
 		// Jika editor, lemparkan kembali ke dashboard
 		return c.Redirect("/dashboard")
 	}
