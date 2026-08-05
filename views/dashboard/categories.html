@@ -1,0 +1,49 @@
+<h1 class="h3 mb-4 text-gray-800">{{.HeaderTitle}}</h1>
+
+<div class="row">
+    <!-- Kolom Kiri: Form -->
+    <div class="col-md-4 mb-4">
+        <div class="card shadow-sm border-0">
+            <div class="card-body">
+                <form action="/categories" method="POST">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Nama Kategori</label>
+                        <input type="text" name="name" class="form-control" required placeholder="Contoh: Jaringan">
+                        <div class="form-text small">Slug akan digenerate otomatis.</div>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Tambah Kategori</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Kolom Kanan: Tabel -->
+    <div class="col-md-8">
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-0">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="px-4 py-3">Nama</th>
+                            <th class="py-3">Slug</th>
+                            <th class="px-4 py-3 text-end">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{range .Categories}}
+                        <tr>
+                            <td class="px-4 py-3 fw-bold">{{.Name}}</td>
+                            <td class="py-3 text-muted">{{.Slug}}</td>
+                            <td class="px-4 py-3 text-end">
+                                <form action="/categories/delete/{{.ID}}" method="POST" class="d-inline" data-confirm="Hapus kategori ini?">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Hapus</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {{end}}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

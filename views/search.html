@@ -1,0 +1,59 @@
+<div class="container py-4">
+    <!-- Header Pencarian -->
+    <div class="mb-4 pb-2 border-bottom">
+        <h1 class="h3 fw-bold">Hasil Pencarian</h1>
+        {{if .Query}}
+            <p class="text-muted">Menampilkan hasil untuk kata kunci: <span class="badge bg-primary fs-6">{{.Query}}</span> (Ditemukan {{.TotalPosts}} artikel)</p>
+        {{else}}
+            <p class="text-muted">Silakan masukkan kata kunci pencarian pada kolom di atas.</p>
+        {{end}}
+    </div>
+
+    <!-- Daftar Hasil -->
+    <div class="row">
+        {{if .Posts}}
+            {{range .Posts}}
+            <div class="col-12 col-md-6 col-lg-4 mb-4">
+                <div class="card h-100 shadow-sm border-0">
+                    {{if .CoverImage}}
+                    <img src="{{thumb .CoverImage 600}}" class="card-img-top object-fit-cover card-img-cover" alt="{{.Title}}">
+                    {{end}}
+                    <div class="card-body">
+                        <div class="mb-2">
+                            <span class="badge bg-secondary">{{if .Category}}{{.Category.Name}}{{else}}Umum{{end}}</span>
+                        </div>
+                        <h2 class="h5 card-title fw-bold">
+                            <a href="/post/{{.Slug}}" class="text-decoration-none text-dark">{{.Title}}</a>
+                        </h2>
+                        <p class="card-text text-muted small">{{.MetaDescription}}</p>
+                    </div>
+                </div>
+            </div>
+            {{end}}
+        {{else}}
+            {{if .Query}}
+            <div class="col-12 text-center py-5">
+                <p class="fs-5 text-muted">Maaf, tidak ada artikel yang cocok dengan kata kunci <strong>"{{.Query}}"</strong>.</p>
+                <a href="/" class="btn btn-outline-primary btn-sm mt-2">Kembali ke Beranda</a>
+            </div>
+            {{end}}
+        {{end}}
+    </div>
+
+    <!-- Pagination Pencarian -->
+    {{if gt .TotalPages 1}}
+    <nav aria-label="Navigasi Pencarian" class="mt-4">
+        <ul class="pagination justify-content-center">
+            <li class="page-item {{if not .HasPrev}}disabled{{end}}">
+                <a class="page-link" href="{{if .HasPrev}}/search?q={{$.Query}}&page={{.PrevPage}}{{else}}#{{end}}">&laquo; Sebelumnya</a>
+            </li>
+            <li class="page-item disabled d-none d-md-block">
+                <span class="page-link">Halaman {{.CurrentPage}} dari {{.TotalPages}}</span>
+            </li>
+            <li class="page-item {{if not .HasNext}}disabled{{end}}">
+                <a class="page-link" href="{{if .HasNext}}/search?q={{$.Query}}&page={{.NextPage}}{{else}}#{{end}}">Selanjutnya &raquo;</a>
+            </li>
+        </ul>
+    </nav>
+    {{end}}
+</div>

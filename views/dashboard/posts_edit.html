@@ -1,0 +1,143 @@
+<!-- Load CSS Quill.js -->
+<link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+<link href="/public/css/posts-form.css" rel="stylesheet">
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0 text-gray-800">{{.HeaderTitle}}</h1>
+    <a href="/posts" class="btn btn-outline-secondary btn-sm">Batal</a>
+</div>
+
+<form action="/posts/edit/{{.Post.ID}}" method="POST" id="postForm">
+    <div class="row">
+        <!-- Kolom Utama -->
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Judul Artikel</label>
+                        <input type="text" name="title" class="form-control form-control-lg" value="{{.Post.Title}}" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Konten</label>
+                        
+                        <!-- Wadah tersembunyi untuk menyimpan teks HTML lama dengan aman -->
+                        <div id="raw-content" class="raw-content">{{.Post.Content}}</div>
+                        
+                        <!-- Wadah untuk Quill Editor & Textarea HTML -->
+                        <div id="editor-wrapper" class="editor-wrapper">
+                            <!-- Mode Visual -->
+                            <div id="editor-container" class="editor-container"></div>
+                            <!-- Mode Code/HTML (Disembunyikan secara default) -->
+                            <textarea id="html-editor" class="form-control html-editor"></textarea>
+                        </div>
+                        
+                        <!-- Hidden input untuk dikirim ke backend -->
+                        <input type="hidden" name="content" id="hidden-content">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Panel SEO Terpisah -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">Pengaturan SEO</h6>
+                    <!-- Tombol Generate AI diaktifkan dan diberi ID -->
+                    <button type="button" id="generateSeoBtn" class="btn btn-sm btn-outline-success{{if eq .EnableGemini "no" }} d-none{{ end }}">✨ Generate AI</button>
+                </div>
+                <div class="card-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Meta Title</label>
+                        <!-- Tambahkan id="metaTitle" -->
+                        <input type="text" id="metaTitle" name="meta_title" class="form-control" value="{{if .Post}}{{.Post.MetaTitle}}{{end}}">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Meta Description</label>
+                        <!-- Tambahkan id="metaDesc" -->
+                        <textarea id="metaDesc" name="meta_description" class="form-control" rows="2">{{if .Post}}{{.Post.MetaDescription}}{{end}}</textarea>
+                    </div>
+                    <div class="mb-0">
+                        <label class="form-label fw-bold small">Target Keyword</label>
+                        <!-- Tambahkan id="targetKeyword" -->
+                        <input type="text" id="targetKeyword" name="target_keyword" class="form-control" placeholder="Contoh: mikrotik routing, golang web" value="{{if .Post}}{{.Post.TargetKeyword}}{{end}}">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Kolom Sidebar -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-body py-3">
+                    <div class="form-check form-switch mb-3 mt-2">
+                        <input class="form-check-input" type="checkbox" name="isDraft" value="true" id="draftSwitch" {{if .Post.IsDraft}}checked{{end}}>
+                        <label class="form-check-label fw-bold" for="draftSwitch">Simpan sebagai Draft</label>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100 fw-bold">Perbarui Postingan</button>
+                </div>
+            </div>
+
+            <!-- Gambar Sampul (Versi CDN) -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-body p-3">
+                    <label class="form-label fw-bold small">Gambar Sampul</label>
+                    
+                    <!-- Tombol Upload File -->
+                    <input type="file" id="uploadCoverBtn" class="form-control form-control-sm mb-2" accept="image/*">
+                    
+                    <!-- Input URL (Sekarang Readonly karena diisi otomatis oleh CDN) -->
+                    <!-- Gunakan value="{{.Post.CoverImage}}" jika ditaruh di posts_edit.html -->
+                    <input type="url" id="coverImageURL" value="{{.Post.CoverImage}}" name="cover_image" class="form-control form-control-sm bg-light" placeholder="URL dari CDN..." readonly>
+                    
+                    <div id="uploadStatus" class="form-text small mt-1">Pilih gambar untuk diunggah ke CDN.</div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-body p-3">
+                    <label class="form-label fw-bold small">Kategori</label>
+                    <select name="category_id" class="form-select form-select-sm" required>
+                        <option value="" disabled>Pilih Kategori...</option>
+                        <!-- Menggunakan variabel untuk mengecek kecocokan ID -->
+                        {{$postCatID := .Post.CategoryID}}
+                        {{range .Categories}}
+                            <option value="{{.ID}}" {{if eq .ID $postCatID}}selected{{end}}>{{.Name}}</option>
+                        {{end}}
+                    </select>
+                </div>
+            </div>
+
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-body p-3">
+                    <label class="form-label fw-bold small mb-2">Tag Terkait</label>
+                    <div class="border rounded p-2 tags-scroll">
+                        <!-- Memanfaatkan SelectedTagsMap untuk memberikan state "checked" -->
+                        {{$selectedMap := .SelectedTagsMap}}
+                        {{range .Tags}}
+                        <div class="form-check mb-1">
+                            <input class="form-check-input" type="checkbox" name="tags[]" value="{{.ID}}" id="tag-{{.ID}}" {{if index $selectedMap .ID}}checked{{end}}>
+                            <label class="form-check-label small" for="tag-{{.ID}}">
+                                {{.Name}}
+                            </label>
+                        </div>
+                        {{end}}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pilihan Tipe Konten -->
+            <div class="mb-3">
+                <label for="type" class="form-label fw-bold">Tipe Konten</label>
+                <select class="form-select" id="type" name="type">
+                    <option value="post" {{if eq .Post.Type "post"}}selected{{end}}>Artikel Biasa (Post)</option>
+                    <option value="page" {{if eq .Post.Type "page"}}selected{{end}}>Halaman Statis (Page)</option>
+                </select>
+                <div class="form-text small text-muted">Halaman Statis tidak akan muncul di beranda.</div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<!-- Load JS Quill.js -->
+<script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+<script src="/public/js/posts-form.js"></script>

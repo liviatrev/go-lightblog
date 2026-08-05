@@ -1,0 +1,73 @@
+<div class="container py-4">
+    <!-- Header Arsip -->
+    <div class="mb-4 pb-2 border-bottom">
+        <h1 class="h3 fw-bold">{{.ArchiveTitle}}</h1>
+        <p class="text-muted">Menampilkan daftar artikel terkait.</p>
+    </div>
+
+    <!-- Daftar Hasil (Struktur yang sama persis dengan Beranda/Search) -->
+    <div class="row">
+        {{if .Posts}}
+            {{range .Posts}}
+            <div class="col-12 col-md-6 col-lg-4 mb-4">
+                <div class="card h-100 shadow-sm border-0">
+                    {{if .CoverImage}}
+                    <a href="/post/{{.Slug}}">
+                        <img src="{{thumb .CoverImage 600}}" class="card-img-top object-fit-cover card-img-cover" alt="{{.Title}}">
+                    </a>
+                    {{end}}
+                    <div class="card-body">
+                        <div class="mb-2">
+                            <!-- Link Kategori Dinamis -->
+                            <a href="/category/{{if .Category}}{{.Category.Slug}}{{end}}" class="badge bg-secondary text-decoration-none">
+                                {{if .Category}}{{.Category.Name}}{{else}}Umum{{end}}
+                            </a>
+                        </div>
+                        <h2 class="h5 card-title fw-bold">
+                            <a href="/post/{{.Slug}}" class="text-decoration-none text-dark">{{.Title}}</a>
+                        </h2>
+                        
+                        <!-- Link Author -->
+                        <p class="text-muted small mb-2">
+                            Oleh: <a href="/author/{{.Author.ID}}" class="text-decoration-none text-info">{{.Author.Name}}</a>
+                        </p>
+
+                        <p class="card-text text-muted small">{{.MetaDescription}}</p>
+                        
+                        <!-- Link Tags Dinamis -->
+                        {{if .Tags}}
+                        <div class="mt-2">
+                            {{range .Tags}}
+                            <a href="/tag/{{.Slug}}" class="badge bg-light text-dark border text-decoration-none">#{{.Name}}</a>
+                            {{end}}
+                        </div>
+                        {{end}}
+                    </div>
+                </div>
+            </div>
+            {{end}}
+        {{else}}
+            <div class="col-12 text-center py-5">
+                <p class="fs-5 text-muted">Belum ada artikel di bagian ini.</p>
+                <a href="/" class="btn btn-outline-primary btn-sm mt-2">Kembali ke Beranda</a>
+            </div>
+        {{end}}
+    </div>
+
+    <!-- Pagination Arsip Dinamis -->
+    {{if gt .TotalPages 1}}
+    <nav aria-label="Navigasi Halaman" class="mt-4">
+        <ul class="pagination justify-content-center">
+            <li class="page-item {{if not .HasPrev}}disabled{{end}}">
+                <a class="page-link" href="{{if .HasPrev}}{{$.PaginationURL}}?page={{.PrevPage}}{{else}}#{{end}}">&laquo; Sebelumnya</a>
+            </li>
+            <li class="page-item disabled d-none d-md-block">
+                <span class="page-link">Halaman {{.CurrentPage}} dari {{.TotalPages}}</span>
+            </li>
+            <li class="page-item {{if not .HasNext}}disabled{{end}}">
+                <a class="page-link" href="{{if .HasNext}}{{$.PaginationURL}}?page={{.NextPage}}{{else}}#{{end}}">Selanjutnya &raquo;</a>
+            </li>
+        </ul>
+    </nav>
+    {{end}}
+</div>

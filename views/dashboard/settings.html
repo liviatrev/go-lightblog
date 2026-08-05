@@ -1,0 +1,173 @@
+<!-- views/dashboard/settings.html -->
+<div class="row">
+    <div class="col-md-12 mb-4">
+        <!-- Notifikasi Sederhana Berdasarkan Query Params -->
+        {{if eq .Message "success"}}
+            <div class="alert alert-success">Pengaturan berhasil disimpan.</div>
+        {{else if eq .Message "error_empty"}}
+            <div class="alert alert-danger">Judul situs tidak boleh kosong.</div>
+        {{else if eq .Message "error_password"}}
+            <div class="alert alert-danger">Password minimal 8 karakter dan konfirmasi harus cocok.</div>
+        {{end}}
+    </div>
+
+    <!-- Panel Kiri: Pengaturan Umum -->
+    <div class="col-md-6 mb-4">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-header bg-white pt-3 pb-2 border-bottom-0">
+                <h4 class="m-0">Pengaturan Umum</h4>
+            </div>
+            <form action="/settings/update" method="POST">
+            <div class="card-body border-bottom-0">
+                    <div class="mb-3">
+                        <label for="siteTitle" class="form-label text-muted">Judul Situs (Site Title)</label>
+                        <input type="text" class="form-control" id="site_title" name="site_title" value="{{.SiteTitle}}" required>
+                    </div>
+                    <!-- Area untuk kustomisasi mendatang -->
+                    <div class="mb-3">
+                        <label for="site_description" class="form-label text-muted">Site Description</label>
+                        <input type="text" class="form-control" id="site_description" name="site_description" value="{{.SiteDesc}}">
+                    </div>
+                    <div class="mb-4">
+                        <label for="site_keywords" class="form-label text-muted">Site Keywords</label>
+                        <input type="text" class="form-control" id="site_keywords" name="site_keywords" value="{{.SiteKeywords}}">
+                    </div>
+            </div>
+            <div class="card-footer bg-white text-end">
+                <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
+            </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Panel Kanan: Keamanan (Ganti Password) -->
+    <div class="col-md-6 mb-4">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-header bg-white pt-3 pb-2 border-bottom-0">
+                <h4 class="m-0">Keamanan Admin</h4>
+            </div>
+            <form action="/settings/password" method="POST">
+            <div class="card-body">
+                    <!-- Tambahan: Input Token Login -->
+                    <div class="mb-4 pb-3 border-bottom">
+                        <label for="loginToken" class="form-label text-muted fw-bold">Custom URL Login</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light">/login-</span>
+                            <input type="text" class="form-control" id="loginToken" name="loginToken" value="{{.LoginToken}}" required>
+                        </div>
+                        <div class="form-text text-danger mt-1">Harap catat baik-baik! Mengubah ini akan memindahkan pintu masuk admin Anda.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="newPassword" class="form-label text-muted">Password Baru</label>
+                        <input type="password" class="form-control" id="newPassword" name="newPassword" minlength="8" required>
+                    </div>
+                    <div class="mb-4">
+                        <label for="confirmPassword" class="form-label text-muted">Konfirmasi Password Baru</label>
+                        <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" minlength="8" required>
+                    </div>
+            </div>
+            <div class="card-footer bg-white text-end">
+                <button type="submit" class="btn btn-danger">Ganti Password</button>
+            </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- BARIS BARU: Integrasi Eksternal (ImageKit & Remark42) -->
+<form action="/settings/integrations" method="POST">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-header bg-white pt-3 pb-2 border-bottom-0">
+                    <h4 class="m-0">Pengaturan Lainnya</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <!-- Pengaturan AI (Gemini) -->
+                        <div class="col-md-12 mb-4">
+                            <div class="card shadow">
+                                <div class="card-header bg-white pt-3 pb-2 border-bottom-0">
+                                    <h5 class="m-0">🤖 Integrasi AI (Gemini SEO)</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="form-check form-switch">
+                                        <label class="form-check-label" for="geminiSwitch">Aktifkan Integrasi AI</label>
+                                        <input class="form-check-input" type="checkbox" role="switch" id="geminiSwitch" {{if eq .EnableGemini "yes" }}checked{{end}}>
+                                        <input type="hidden" name="enable_gemini" id="enable_gemini" value="{{.EnableGemini}}">
+                                    </div>
+                                    <div class="row g-2 mb-3 {{if eq .EnableGemini "yes"}}d-flex{{else}}d-none{{end}}" id="geminiAiContainer">
+                                        <div class="col-12 col-md-6">
+                                            <label class="form-label text-muted">Gemini API Key</label>
+                                            <input type="password" name="gemini_api_key" class="form-control" value="{{.GeminiKey}}" placeholder="AIzaSy...">
+                                        </div>
+                                        <div class="col-12 col-md-6">
+                                            <label class="form-label text-muted">Model AI</label>
+                                            <input type="text" name="gemini_model" class="form-control" value="{{.GeminiModel}}" placeholder="gemini-3.6-flash">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                    <!-- Pengaturan Media -->
+                    <div class="col-md-6 mb-4">
+                        <div class="card shadow h-100">
+                            <div class="card-header bg-white pt-3 pb-2 border-bottom-0">
+                                <h5 class="m-0">☁️ Pengaturan Media & CDN</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label class="form-label text-muted">Tujuan Upload Gambar</label>
+                                    <select name="upload_mode" class="form-select" id="uploadModeSelect">
+                                        <option value="local" {{if eq .UploadMode "local" }}selected{{ end }}>Server Lokal (Direktori Publik)</option>
+                                        <option value="imagekit" {{if eq .UploadMode "imagekit" }}selected{{ end }}>ImageKit (CDN)</option>
+                                    </select>
+                                    <div class="form-text mt-1">Pilih di mana gambar sampul akan disimpan.</div>
+                                </div>
+
+                                <div class="mb-3 {{if eq .UploadMode "imagekit"}}d-block{{else}}d-none{{end}}" id="imageKitKeyContainer">
+                                    <label class="form-label text-muted">ImageKit Private Key</label>
+                                    <input type="password" name="imagekit_private_key" class="form-control" value="{{.ImagekitKey}}" placeholder="private_...">
+                                    <div class="form-text text-warning mt-1 mb-2">Hanya dieksekusi saat menggunakan CDN.</div>
+                                    <label class="form-label text-muted">ImageKit Folder (Opsional)</label>
+                                    <input type="text" name="imagekit_folder" class="form-control" value="{{.ImagekitFolder}}" placeholder="/lightblog">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pengaturan Remark42 -->
+                    <div class="col-md-6 mb-4">
+                        <div class="card shadow h-100">
+                            <div class="card-header bg-white pt-3 pb-2 border-bottom-0">
+                                <h5 class="m-0">💬 Remark42 (Komentar)</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label class="form-label text-muted">URL Host Remark42</label>
+                                    <input type="url" name="remark42_url" class="form-control" value="{{.Remark42URL}}" placeholder="http://127.0.0.1:8080">
+                                    <div class="form-text mt-1">URL server penampung Remark42 berjalan.</div>
+                                </div>
+
+                                <div class="mb-4">
+                                    <label class="form-label text-muted">Site ID (Multisite Flag)</label>
+                                    <input type="text" name="remark42_site_id" class="form-control" value="{{.Remark42SiteID}}" placeholder="lightblog-utama">
+                                    <div class="form-text mt-1">ID situs yang didaftarkan pada .env Remark42.</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <button type="submit" class="btn btn-primary w-100">Simpan Integrasi</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<script src="/public/js/settings.js"></script>

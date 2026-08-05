@@ -1,0 +1,47 @@
+<!-- views/dashboard/index.html -->
+<div class="row">
+    <div class="col-md-4">
+        <div class="card shadow-sm border-0">
+            <div class="card-body">
+                <h5 class="card-title text-muted">Total Postingan</h5>
+                <!-- Tampilkan variabel TotalPosts -->
+                <h2 class="display-4 fw-bold">{{.TotalPosts}}</h2>
+                <a href="/posts/create" class="btn btn-sm btn-outline-primary mt-2">Tulis Baru</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-8">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-body">
+                <h5 class="card-title mb-4">Aktivitas Terbaru (Diedit / Dibuat)</h5>
+                
+                {{if .RecentPosts}}
+                    <div class="list-group list-group-flush">
+                        {{range .RecentPosts}}
+                        <div class="list-group-item px-0 py-3 border-bottom">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">
+                                        <a href="/posts/edit/{{.ID}}" class="text-decoration-none text-dark fw-bold">{{.Title}}</a>
+                                    </h6>
+                                    <small class="text-muted">
+                                        {{if .IsDraft}}
+                                            <span class="badge bg-secondary me-1">Draft</span>
+                                        {{end}}
+                                        Diperbarui pada {{.UpdatedAt.Format "02 Jan 2006, 15:04"}}
+                                    </small>
+                                </div>
+                                <a href="/posts/edit/{{.ID}}" class="btn btn-sm btn-light">Edit</a>
+                            </div>
+                        </div>
+                        {{end}}
+                    </div>
+                {{else}}
+                    <!-- Tampil jika RecentPosts kosong -->
+                    <p class="text-muted mt-3">Belum ada aktivitas. Mulai menulis postingan pertamamu!</p>
+                {{end}}
+            </div>
+        </div>
+    </div>
+</div>

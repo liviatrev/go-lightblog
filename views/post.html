@@ -1,0 +1,61 @@
+<!-- views/post.html -->
+<div class="mt-4 mb-5 mx-2">
+    
+    <!-- Breadcrumb / Kategori -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb small">
+            <li class="breadcrumb-item"><a href="/" class="text-decoration-none text-muted">Beranda</a></li>
+            <li class="breadcrumb-item active fw-medium text-primary" aria-current="page">{{.Post.Category.Name}}</li>
+        </ol>
+    </nav>
+
+    <!-- Judul Artikel -->
+    <h1 class="fw-bold mb-3 lh-base">{{.Post.Title}}</h1>
+    <!-- <header class="py-3 py-lg-5 border-bottom mb-4">
+        <div class="container">
+            <h1 class="fw-bold fs-3 fs-lg-1">{{.Post.Title}}</h1>
+        </div>
+    </header> -->
+    
+    <!-- Meta Info (Penulis & Tanggal) -->
+    <div class="d-flex align-items-center mb-4 text-muted small">
+        <div class="bg-secondary text-white rounded-circle d-flex justify-content-center align-items-center me-2 author-avatar">
+            {{slice .Post.Author.Name 0 1}}
+        </div>
+        <div>
+            <span class="fw-bold text-dark">{{.Post.Author.Name}}</span> &nbsp;&middot;&nbsp; 
+            <span>{{.Post.CreatedAt.Format "02 Jan 2006"}}</span>
+        </div>
+    </div>
+
+    <!-- Gambar Sampul -->
+    {{if .Post.CoverImage}}
+        <img src="{{.Post.CoverImage}}" class="img-fluid rounded mb-5 shadow-sm w-100 post-cover" alt="{{.Post.Title}}">
+    {{end}}
+
+    <!-- Konten Artikel -->
+    <div id="raw-content" class="raw-content">{{.Post.Content}}</div>
+    <div id="post-body" class="post-content post-body mb-5 text-dark">
+        <!-- Konten akan dimuat di sini -->
+    </div>
+
+    <!-- Tag -->
+    <div class="mb-5 pt-4 border-top">
+        <span class="fw-bold me-3 small text-muted">TAGS</span>
+        {{range .Post.Tags}}
+            <span class="badge bg-light text-secondary border me-1 px-3 py-2">#{{.Name}}</span>
+        {{end}}
+    </div>
+
+    <!-- Area Komentar Disqus -->
+    <div class="mt-5 pt-4">
+        <h4 class="fw-bold mb-4">Komentar</h4>
+        <div id="remark42"
+             data-remark-host="{{.Remark42URL}}"
+             data-remark-site-id="{{.Remark42SiteID}}"
+             data-page-title="{{.Post.Title}}"></div>
+    </div>
+
+</div>
+
+<script src="/public/js/post.js"></script>

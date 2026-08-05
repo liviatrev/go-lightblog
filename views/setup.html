@@ -1,0 +1,58 @@
+<!-- views/setup.html -->
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setup - go-lightblog</title>
+    <!-- Bootstrap 5.3.8 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+    <meta name="robots" content="noindex, nofollow">
+    <link href="/public/css/auth.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-4">
+                    <h3 class="text-center mb-4">Mulai Instalasi</h3>
+                    
+                    {{if .Error}}
+                        <div class="alert alert-danger">{{.Error}}</div>
+                    {{end}}
+
+                    <form action="/setup/process" method="POST">
+                        <div class="mb-3">
+                            <label class="form-label text-muted small fw-bold">Judul Situs</label>
+                            <input type="text" name="site_title" class="form-control" placeholder="Contoh: Jaringan Livia" required>
+                        </div>
+                        
+                        <hr class="my-4 text-muted">
+
+                        <div class="mb-3">
+                            <label class="form-label text-muted small fw-bold">Username Administrator</label>
+                            <input type="text" name="username" class="form-control" required>
+                        </div>
+
+                        <!-- Tambahan Input Nama -->
+                        <div class="mb-3">
+                            <label class="form-label text-muted small fw-bold">Nama Tampilan (Author)</label>
+                            <input type="text" name="name" class="form-control" placeholder="Contoh: Livia" required>
+                            <div class="form-text">Nama ini akan tampil di setiap postingan yang kamu tulis.</div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label text-muted small fw-bold">Password</label>
+                            <input type="password" name="password" class="form-control" required>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary w-100 py-2 fw-bold">Instal Sekarang</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
