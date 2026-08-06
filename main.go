@@ -21,6 +21,13 @@ import (
 	"github.com/gofiber/template/html/v2"
 )
 
+// ThumbURLs holds both variants produced by the "thumb" template function,
+// letting templates prioritize WebP with a JPG fallback.
+type ThumbURLs struct {
+	WebP string
+	JPG  string
+}
+
 func main() {
 	// Parsing command-line flags
 	listenAddr := flag.String("l", "", "Listen TCP address (e.g., 127.0.0.1)")
@@ -32,6 +39,9 @@ func main() {
 
 	// Initialize Database
 	database.Connect(*dbPath)
+
+	// Pass the public folder flag to helpers (uploads / thumbnails storage)
+	config.PublicPath = *publicPath
 
 	// Initialize Session Store
 	config.InitSession()
@@ -46,22 +56,33 @@ func main() {
 	})
 
 	// Add Custom Function (Can be called in HTML)
-	engine.AddFunc("thumb", func(url string, width int) string {
+	engine.AddFunc("thumb", func(url string, width int) ThumbURLs {
 		if url == "" {
-			return "/public/assets/default-cover.jpg" // Default image URL if post has no cover
+			// Default image URL if post has no cover
+			return ThumbURLs{
+				WebP: "/public/assets/default-cover.jpg",
+				JPG:  "/public/assets/default-cover.jpg",
+			}
 		}
-		
+
 		// Scenario 1: If image comes from ImageKit CDN
 		if strings.Contains(url, "imagekit.io") {
 			// ImageKit uses query parameter ?tr=w-XXX
+			sep := "?"
 			if strings.Contains(url, "?") {
-				return fmt.Sprintf("%s&tr=w-%d,q-70,f-webp", url, width)
+				sep = "&"
 			}
-			return fmt.Sprintf("%s?tr=w-%d,q-70,f-webp", url, width)
+			return ThumbURLs{
+				WebP: fmt.Sprintf("%s%str=w-%d,q-70,f-webp", url, sep, width),
+				JPG:  fmt.Sprintf("%s%str=w-%d,q-70,f-jpg", url, sep, width),
+			}
 		}
-		
+
 		// Scenario 2: If image is local
-		return fmt.Sprintf("/api/thumb?src=%s&w=%d", url, width)
+		return ThumbURLs{
+			WebP: fmt.Sprintf("/api/thumb?src=%s&w=%d&f=webp", url, width),
+			JPG:  fmt.Sprintf("/api/thumb?src=%s&w=%d&f=jpg", url, width),
+		}
 	})
 
 	// Add Cache Buster Functions for static files

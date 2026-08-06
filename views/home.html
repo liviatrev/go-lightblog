@@ -16,7 +16,11 @@
                 
                 <!-- Cover Image -->
                 {{if .CoverImage}}
-                    <img src="{{thumb .CoverImage 600}}" class="card-img-top card-img-cover" alt="{{.Title}}">
+                    {{$cover := thumb .CoverImage 600}}
+                    <picture>
+                        <source srcset="{{$cover.WebP}}" type="image/webp">
+                        <img src="{{$cover.JPG}}" class="card-img-top card-img-cover" alt="{{.Title}}">
+                    </picture>
                 {{else}}
                     <!-- Placeholder if no image -->
                     <div class="card-img-top bg-light d-flex align-items-center justify-content-center card-img-placeholder">

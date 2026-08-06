@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"image"
 	"os"
@@ -17,6 +18,7 @@ import (
 	"go-lightblog/database"
 	"go-lightblog/models"
 
+	"github.com/HugoSmits86/nativewebp"
 	"github.com/disintegration/imaging"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/session"
@@ -24,7 +26,6 @@ import (
 	"github.com/imagekit-developer/imagekit-go/v2/option"
 	"github.com/imagekit-developer/imagekit-go/v2/packages/param"
 	"google.golang.org/genai"
-	"encoding/json"
 )
 
 // ============================================================
@@ -203,7 +204,7 @@ func ProcessUpload(c *fiber.Ctx, formField string) (string, error) {
 	uploadMode := models.GetSetting(database.DB, "upload_mode", "local")
 
 	if uploadMode == "local" {
-		uploadDir := "./public/uploads"
+		uploadDir := filepath.Join(config.PublicPath, "uploads")
 		if err := os.MkdirAll(uploadDir, os.ModePerm); err != nil {
 			return "", err
 		}
@@ -275,15 +276,29 @@ func isAllowedImageExt(ext string) bool {
 // 7. IMAGE PROCESSING / THUMBNAIL HELPERS
 // ============================================================
 
-// ResizeAndCacheThumbnail resizes local image and saves it as cache
+// ResizeAndCacheThumbnail resizes local image and saves it as cache.
+// It always produces both JPG and WebP variants so that HTML templates can
+// prioritize WebP with a JPG fallback. The format parameter selects which
+// variant path is returned ("jpg" or "webp", default "jpg").
 // Used by ImageThumbProxy in handlers/media.go
-func ResizeAndCacheThumbnail(src string, w int) (string, error) {
+func ResizeAndCacheThumbnail(src string, w int, format string) (string, error) {
 	// Security validation (Prevent Path Traversal)
 	if !strings.HasPrefix(src, "/public/uploads/") || strings.Contains(src, "..") {
 		return "", fmt.Errorf("access denied")
 	}
 
-	localPath := "." + src
+	// Validate requested output format (jpg or webp), default jpg
+	switch strings.ToLower(format) {
+	case "", "jpg", "jpeg":
+		format = "jpg"
+	case "webp":
+		format = "webp"
+	default:
+		return "", fmt.Errorf("unsupported image format")
+	}
+
+	// Resolve the local file against the dynamic public folder
+	localPath := filepath.Join(config.PublicPath, strings.TrimPrefix(src, "/public/"))
 
 	// Prevent OOM: limit source image size (decompression bomb guard)
 	f, err := os.Open(localPath)
@@ -309,9 +324,15 @@ func ResizeAndCacheThumbnail(src string, w int) (string, error) {
 	}
 
 	base := strings.TrimSuffix(filepath.Base(localPath), filepath.Ext(localPath))
-	thumbDir := "./public/uploads/thumbs"
-	// Always use .jpg extension because output is encoded as JPEG
-	thumbPath := fmt.Sprintf("%s/w%d_%s.jpg", thumbDir, w, base)
+	thumbDir := filepath.Join(config.PublicPath, "uploads", "thumbs")
+	// JPG and WebP variants share the same basename with different extensions
+	jpgPath := fmt.Sprintf("%s/w%d_%s.jpg", thumbDir, w, base)
+	webpPath := fmt.Sprintf("%s/w%d_%s.webp", thumbDir, w, base)
+
+	thumbPath := jpgPath
+	if format == "webp" {
+		thumbPath = webpPath
+	}
 
 	// 1. Check Cache
 	if _, err := os.Stat(thumbPath); err == nil {
@@ -337,27 +358,50 @@ func ResizeAndCacheThumbnail(src string, w int) (string, error) {
 	// 4. Resize with Lanczos algorithm
 	resizedImg := imaging.Resize(img, w, 0, imaging.Lanczos)
 
-	// 5. Save to temp file then rename for race safety
-	// (two concurrent requests for the same thumbnail won't corrupt each other)
-	tmp, err := os.CreateTemp(thumbDir, "thumb-*.tmp")
+	// 5. Ensure both JPG and WebP variants exist
+	// (atomic temp-file + rename avoids corruption from concurrent requests)
+	if _, err := os.Stat(jpgPath); err != nil {
+		if err := saveImageFile(resizedImg, jpgPath, "jpg"); err != nil {
+			return "", fmt.Errorf("failed to save thumbnail")
+		}
+	}
+	if _, err := os.Stat(webpPath); err != nil {
+		if err := saveImageFile(resizedImg, webpPath, "webp"); err != nil {
+			return "", fmt.Errorf("failed to save thumbnail")
+		}
+	}
+
+	return thumbPath, nil
+}
+
+// saveImageFile encodes img into path (jpg or webp) atomically using a
+// temp file + rename so a crash never leaves a half-written thumbnail.
+func saveImageFile(img image.Image, path, format string) error {
+	tmp, err := os.CreateTemp(filepath.Dir(path), "thumb-*.tmp")
 	if err != nil {
-		return "", fmt.Errorf("failed to save thumbnail")
+		return err
 	}
 	tmpName := tmp.Name()
-	encodeErr := imaging.Encode(tmp, resizedImg, imaging.JPEG, imaging.JPEGQuality(70))
+
+	var encodeErr error
+	switch format {
+	case "webp":
+		encodeErr = nativewebp.Encode(tmp, img, &nativewebp.Options{})
+	default:
+		encodeErr = imaging.Encode(tmp, img, imaging.JPEG, imaging.JPEGQuality(70))
+	}
 	closeErr := tmp.Close()
 	if encodeErr != nil || closeErr != nil {
 		os.Remove(tmpName)
-		return "", fmt.Errorf("failed to save thumbnail")
+		return fmt.Errorf("encode failed")
 	}
-	if err := os.Rename(tmpName, thumbPath); err != nil {
+	if err := os.Rename(tmpName, path); err != nil {
 		os.Remove(tmpName)
-		return "", fmt.Errorf("failed to save thumbnail")
+		return err
 	}
 	// Ensure thumbnail is readable by other processes (e.g. reverse proxy)
-	os.Chmod(thumbPath, 0644)
-
-	return thumbPath, nil
+	os.Chmod(path, 0644)
+	return nil
 }
 
 // ============================================================

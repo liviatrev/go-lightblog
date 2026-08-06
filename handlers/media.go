@@ -9,8 +9,9 @@ import (
 func ImageThumbProxy(c *fiber.Ctx) error {
 	src := c.Query("src")
 	w := c.QueryInt("w", 600)
+	format := c.Query("f", "jpg")
 
-	thumbPath, err := utils.ResizeAndCacheThumbnail(src, w)
+	thumbPath, err := utils.ResizeAndCacheThumbnail(src, w, format)
 	if err != nil {
 		switch err.Error() {
 		case "access denied":

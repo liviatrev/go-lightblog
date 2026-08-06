@@ -13,7 +13,11 @@
                 <div class="card h-100 shadow-sm border-0">
                     {{if .CoverImage}}
                     <a href="/post/{{.Slug}}">
-                        <img src="{{thumb .CoverImage 600}}" class="card-img-top object-fit-cover card-img-cover" alt="{{.Title}}">
+                        {{$cover := thumb .CoverImage 600}}
+                        <picture>
+                            <source srcset="{{$cover.WebP}}" type="image/webp">
+                            <img src="{{$cover.JPG}}" class="card-img-top object-fit-cover card-img-cover" alt="{{.Title}}">
+                        </picture>
                     </a>
                     {{end}}
                     <div class="card-body">

@@ -25,7 +25,11 @@
 
     <!-- Cover Image -->
     {{if .Post.CoverImage}}
-        <img src="{{.Post.CoverImage}}" class="img-fluid rounded mb-5 shadow-sm w-100 post-cover" alt="{{.Post.Title}}">
+        {{$cover := thumb .Post.CoverImage 1200}}
+        <picture>
+            <source srcset="{{$cover.WebP}}" type="image/webp">
+            <img src="{{$cover.JPG}}" class="img-fluid rounded mb-5 shadow-sm w-100 post-cover" alt="{{.Post.Title}}">
+        </picture>
     {{end}}
 
     <!-- Article Content -->
