@@ -5,10 +5,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{.Title}} - go-lightblog</title>
+    <link rel="icon" type="image/x-icon" href="/public/assets/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/public/assets/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/public/assets/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/public/assets/apple-touch-icon.png">
+    <link rel="manifest" href="/public/manifest.json">
     <!-- Bootstrap 5.3.8 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
     <meta name="robots" content="noindex, nofollow">
-    <link href="/public/css/admin.min.css" rel="stylesheet">
+    <link href="{{cacheBusterURL "/public/css/admin.min.css"}}" rel="stylesheet">
 </head>
 <body>
     <div class="d-flex">
@@ -62,6 +67,6 @@
             </main>
         </div>
     </div>
-    <script src="/public/js/admin.min.js"></script>
+    <script src="{{cacheBusterURL "/public/js/admin.min.js"}}"></script>
 </body>
 </html>

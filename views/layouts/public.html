@@ -38,9 +38,14 @@
         <meta property="og:description" content="{{.SiteDescription}}">
         <meta name="twitter:card" content="summary">
     {{end}}
+    <link rel="icon" type="image/x-icon" href="/public/assets/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/public/assets/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/public/assets/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/public/assets/apple-touch-icon.png">
+    <link rel="manifest" href="/public/manifest.json">
     <!-- Bootstrap 5.3.8 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="/public/css/public.min.css" rel="stylesheet">
+    <link href="{{cacheBusterURL "/public/css/public.min.css"}}" rel="stylesheet">
 </head>
 <body>
     <div class="container public-container">

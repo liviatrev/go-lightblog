@@ -2,6 +2,8 @@ package database
 
 import (
 	"log"
+	"time"
+
 	"go-lightblog/config"
 	"go-lightblog/models"
 
@@ -14,13 +16,25 @@ import (
 var DB *gorm.DB
 
 func Connect(dbPath string) {
-	// Using glebarez/sqlite pure Go
-	db, err := gorm.Open(sqlite.Open(dbPath), &gorm.Config{
+	// 1. Using glebarez/sqlite pure Go and PRAGMA params
+	dsn := dbPath + "?_pragma=journal_mode(WAL)&_pragma=synchronous(NORMAL)&_pragma=busy_timeout(5000)"
+	db, err := gorm.Open(sqlite.Open(dsn), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Silent), // Silent to keep terminal clean, can change to Info to see raw SQL
 	})
 	if err != nil {
 		log.Fatalf("Failed to connect to SQLite database: %v", err)
 	}
+
+	// 2. Prevent Memory Leaks
+	sqlDB, err := db.DB()
+	if err != nil {
+		log.Fatalf("Failed to extract sql.DB to set connection pool: %v", err)
+	}
+	
+	// Limit connection
+	sqlDB.SetMaxIdleConns(5)                  
+	sqlDB.SetMaxOpenConns(25)                 
+	sqlDB.SetConnMaxLifetime(1 * time.Hour)
 
 	// Run automatic migration for table structure
 	err = db.AutoMigrate(
@@ -61,7 +75,9 @@ func Connect(dbPath string) {
 
 	// Check if there is already admin data in User table
 	var userCount int64
-	db.Model(&models.User{}).Count(&userCount)
+	if err := db.Model(&models.User{}).Count(&userCount).Error; err != nil {
+		log.Fatalf("Failed to query user count during setup check: %v", err)
+	}
 	if userCount > 0 {
 		config.AppSetupCompleted = true
 		log.Println("CMS Status: Setup completed.")

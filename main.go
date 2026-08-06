@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"html/template"
 	"log"
+	"net"
+	"os"
 	"strings"
 	"time"
 
@@ -13,6 +15,7 @@ import (
 	"go-lightblog/handlers"
 	"go-lightblog/models"
 	"go-lightblog/middleware"
+	"go-lightblog/utils"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/template/html/v2"
@@ -20,9 +23,11 @@ import (
 
 func main() {
 	// Parsing command-line flags
-	listenAddr := flag.String("l", "127.0.0.1", "Listen address (default 127.0.0.1)")
-	listenPort := flag.Int("p", 5800, "Listen port (default 5800)")
+	listenAddr := flag.String("l", "", "Listen TCP address (e.g., 127.0.0.1)")
+	listenPort := flag.Int("p", 0, "Listen TCP port (default 5800)")
+	socketPath := flag.String("sock", "/tmp/lightblog.sock", "Unix socket path (default if no TCP flags are provided)")
 	dbPath := flag.String("db", "lightblog.db", "File database")
+	publicPath := flag.String("a", "./public", "Public folder")
 	flag.Parse()
 
 	// Initialize Database
@@ -59,6 +64,10 @@ func main() {
 		return fmt.Sprintf("/api/thumb?src=%s&w=%d", url, width)
 	})
 
+	// Add Cache Buster Functions for static files
+	engine.AddFunc("cacheBuster", utils.GetCacheBuster)
+	engine.AddFunc("cacheBusterURL", utils.CacheBusterURL)
+
 	// Initialize Fiber App
 	app := fiber.New(fiber.Config{
 		Views:       engine,
@@ -70,7 +79,7 @@ func main() {
 	app.Use(middleware.CheckSetup)
 
 	// Serve static files from "public" folder
-	app.Static("/public", "./public")
+	app.Static("/public", *publicPath)
 
 	// Temporary route to ensure server is running
 	app.Get("/setup", func(c *fiber.Ctx) error {
@@ -208,11 +217,53 @@ func main() {
 	superAdminGroup.Post("/users/delete/:id", handlers.DeleteUserProcess)
 
 
-	// Set up address and run server
-	addr := fmt.Sprintf("%s:%d", *listenAddr, *listenPort)
-	log.Printf("Starting go-lightblog on http://%s", addr)
-	
-	if err := app.Listen(addr); err != nil {
-		log.Fatalf("Error starting server: %v", err)
+	// ==========================================
+	// SERVER LISTENER LOGIC
+	// ==========================================
+
+	// If there is flag -l (listenAddr) or -p (listenPort), use TCP mode
+	if *listenAddr != "" || *listenPort != 0 {
+		host := "127.0.0.1" // Fallback for host
+		if *listenAddr != "" {
+			host = *listenAddr
+		}
+		
+		port := 5800 // Fallback for port
+		if *listenPort != 0 {
+			port = *listenPort
+		}
+		
+		addr := fmt.Sprintf("%s:%d", host, port)
+		log.Printf("Starting go-lightblog on TCP http://%s", addr)
+		
+		if err := app.Listen(addr); err != nil {
+			log.Fatalf("Error starting TCP server: %v", err)
+		}
+	} else {
+		// If no TCP params, use Unix Socket
+		log.Printf("Starting go-lightblog on Unix Socket: %s", *socketPath)
+
+		// 1. Clean old socket file
+		if _, err := os.Stat(*socketPath); err == nil {
+			if err := os.Remove(*socketPath); err != nil {
+				log.Fatalf("Failed to remove existing socket file: %v", err)
+			}
+		}
+
+		// 2. Create new listener
+		ln, err := net.Listen("unix", *socketPath)
+		if err != nil {
+			log.Fatalf("Failed to listen on unix socket: %v", err)
+		}
+
+		// 3. Set permission for proxy server (www-data/caddy)
+		if err := os.Chmod(*socketPath, 0666); err != nil {
+			log.Printf("Warning: Failed to set socket permissions: %v", err)
+		}
+
+		// 4. run through custom listener
+		if err := app.Listener(ln); err != nil {
+			log.Fatalf("Error starting Unix Socket server: %v", err)
+		}
 	}
 }
