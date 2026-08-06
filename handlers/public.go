@@ -34,7 +34,7 @@ func Home(c *fiber.Ctx) error {
 
 	siteTitle := utils.GetSiteTitle()
 
-	siteDesc := models.GetSetting(database.DB, "site_description", "Blog minimalis dan cepat bertenaga Go Fiber.")
+	siteDesc := models.GetSetting(database.DB, "site_description", "A minimal and fast blog powered by Go Fiber.")
 	siteKeywords := models.GetSetting(database.DB, "site_keywords", "blog, go, fiber, lightblog")
 
 	data := utils.GetNavbarData()
@@ -53,7 +53,7 @@ func Home(c *fiber.Ctx) error {
 	return c.Render("home", data, "layouts/public")
 }
 
-// ReadPost menampilkan isi penuh satu artikel berdasarkan slug
+// ReadPost displays the full content of an article by slug
 func ReadPost(c *fiber.Ctx) error {
 	slug := c.Params("slug")
 	remark42URL := models.GetSetting(database.DB, "remark42_url", "http://127.0.0.1:8080")
@@ -61,19 +61,19 @@ func ReadPost(c *fiber.Ctx) error {
 
 	var post models.Post
 
-	// Cari artikel berdasarkan slug dan pastikan bukan draft
+	// Find article by slug and ensure it's not a draft
 	if err := database.DB.Where("slug = ? AND is_draft = ?", slug, false).
 		Preload("Category").
 		Preload("Tags").
 		Preload("Author").
 		First(&post).Error; err != nil {
-		return c.Status(fiber.StatusNotFound).SendString("Artikel tidak ditemukan atau belum dipublikasikan.")
+		return c.Status(fiber.StatusNotFound).SendString("Article not found or not published.")
 	}
 
 	baseURL := c.BaseURL()
 	metaImageURL := post.CoverImage
 	if metaImageURL != "" && !strings.HasPrefix(metaImageURL, "http") {
-		metaImageURL = baseURL + metaImageURL // Gabungkan: https://domainmu.com + /public/uploads/gambar.jpg
+		metaImageURL = baseURL + metaImageURL // Combine: https://yourdomain.com + /public/uploads/image.jpg
 	}
 
 	// return c.Render("post", fiber.Map{
@@ -98,7 +98,7 @@ func ReadPost(c *fiber.Ctx) error {
 	return c.Render("post", data, "layouts/public")
 }
 
-// SearchPosts menangani pencarian artikel berdasarkan kata kunci
+// SearchPosts handles article search by keyword
 func SearchPosts(c *fiber.Ctx) error {
 	query := strings.TrimSpace(c.Query("q"))
 	page := c.QueryInt("page", 1)
@@ -109,17 +109,17 @@ func SearchPosts(c *fiber.Ctx) error {
 	var totalPosts int64
 
 	if query != "" {
-		// Cari berdasarkan Judul, Meta Description, atau Konten
-		// Hanya cari tipe 'post' dan bukan draft
+		// Search by Title, Meta Description, or Content
+		// Only search type 'post' and not draft
 		searchTerm := "%" + query + "%"
 		dbQuery := database.DB.Model(&models.Post{}).
 			Where("is_draft = ? AND type = ?", false, "post").
 			Where("title LIKE ? OR meta_description LIKE ? OR content LIKE ?", searchTerm, searchTerm, searchTerm)
 
-		// Hitung total hasil pencarian
+		// Count total search results
 		dbQuery.Count(&totalPosts)
 
-		// Ambil data hasil pencarian
+		// Get search result data
 		dbQuery.Preload("Category").
 			Preload("Author").
 			Order("created_at desc").
@@ -131,7 +131,7 @@ func SearchPosts(c *fiber.Ctx) error {
 	totalPages := int(math.Ceil(float64(totalPosts) / float64(limit)))
 
 	data := utils.GetNavbarData()
-	data["SiteTitle"] = "Pencarian: " + query + " - " + utils.GetSiteTitle()
+	data["SiteTitle"] = "Search: " + query + " - " + utils.GetSiteTitle()
 	data["Query"] = query
 	data["Posts"] = posts
 	data["TotalPosts"] = totalPosts
@@ -145,17 +145,17 @@ func SearchPosts(c *fiber.Ctx) error {
 	return c.Render("search", data, "layouts/public")
 }
 
-// CategoryPosts menampilkan daftar artikel berdasarkan Kategori
+// CategoryPosts displays a list of articles by Category
 func CategoryPosts(c *fiber.Ctx) error {
 	slug := c.Params("slug")
 	page := c.QueryInt("page", 1)
 	limit := 6
 	offset := (page - 1) * limit
 
-	// Cari kategori berdasarkan slug
+	// Find category by slug
 	var category models.Category
 	if err := database.DB.Where("slug = ?", slug).First(&category).Error; err != nil {
-		return c.Status(fiber.StatusNotFound).SendString("Kategori tidak ditemukan")
+		return c.Status(fiber.StatusNotFound).SendString("Category not found")
 	}
 
 	var posts []models.Post
@@ -170,8 +170,8 @@ func CategoryPosts(c *fiber.Ctx) error {
 	totalPages := int(math.Ceil(float64(total) / float64(limit)))
 
 	data := utils.GetNavbarData()
-	data["SiteTitle"] = "Kategori: " + category.Name + " - " + utils.GetSiteTitle()
-	data["ArchiveTitle"] = "Kategori: " + category.Name
+	data["SiteTitle"] = "Category: " + category.Name + " - " + utils.GetSiteTitle()
+	data["ArchiveTitle"] = "Category: " + category.Name
 	data["Posts"] = posts
 	data["CurrentPage"] = page
 	data["TotalPages"] = totalPages
@@ -179,13 +179,13 @@ func CategoryPosts(c *fiber.Ctx) error {
 	data["HasNext"] = page < totalPages
 	data["PrevPage"] = page - 1
 	data["NextPage"] = page + 1
-	// Kita gunakan parameter ekstra untuk link pagination agar sesuai dengan URL saat ini
+	// We use an extra parameter for pagination link to match current URL
 	data["PaginationURL"] = "/category/" + slug
 
 	return c.Render("archive", data, "layouts/public")
 }
 
-// TagPosts menampilkan daftar artikel berdasarkan Tag
+// TagPosts displays a list of articles by Tag
 func TagPosts(c *fiber.Ctx) error {
 	slug := c.Params("slug")
 	page := c.QueryInt("page", 1)
@@ -194,13 +194,13 @@ func TagPosts(c *fiber.Ctx) error {
 
 	var tag models.Tag
 	if err := database.DB.Where("slug = ?", slug).First(&tag).Error; err != nil {
-		return c.Status(fiber.StatusNotFound).SendString("Tag tidak ditemukan")
+		return c.Status(fiber.StatusNotFound).SendString("Tag not found")
 	}
 
 	var posts []models.Post
 	var total int64
 
-	// Join tabel relasi many-to-many (asumsi nama tabel default GORM adalah post_tags)
+	// Join many-to-many relationship table (assume default GORM table name is post_tags)
 	dbQuery := database.DB.Model(&models.Post{}).
 		Joins("JOIN post_tags ON post_tags.post_id = posts.id").
 		Where("post_tags.tag_id = ? AND posts.is_draft = ? AND posts.type = ?", tag.ID, false, "post")
@@ -226,16 +226,16 @@ func TagPosts(c *fiber.Ctx) error {
 	return c.Render("archive", data, "layouts/public")
 }
 
-// AuthorPosts menampilkan daftar artikel berdasarkan Penulis
+// AuthorPosts displays a list of articles by Author
 func AuthorPosts(c *fiber.Ctx) error {
-	id := c.Params("id") // Kita gunakan ID Penulis sebagai parameter URL
+	id := c.Params("id") // Using Author ID as URL parameter
 	page := c.QueryInt("page", 1)
 	limit := 6
 	offset := (page - 1) * limit
 
 	var author models.User
 	if err := database.DB.Where("id = ?", id).First(&author).Error; err != nil {
-		return c.Status(fiber.StatusNotFound).SendString("Penulis tidak ditemukan")
+		return c.Status(fiber.StatusNotFound).SendString("Author not found")
 	}
 
 	var posts []models.Post
@@ -250,8 +250,8 @@ func AuthorPosts(c *fiber.Ctx) error {
 	totalPages := int(math.Ceil(float64(total) / float64(limit)))
 
 	data := utils.GetNavbarData()
-	data["SiteTitle"] = "Penulis: " + author.Name + " - " + utils.GetSiteTitle()
-	data["ArchiveTitle"] = "Penulis: " + author.Name
+	data["SiteTitle"] = "Author: " + author.Name + " - " + utils.GetSiteTitle()
+	data["ArchiveTitle"] = "Author: " + author.Name
 	data["Posts"] = posts
 	data["CurrentPage"] = page
 	data["TotalPages"] = totalPages

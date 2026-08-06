@@ -1,7 +1,7 @@
 (function () {
     var quill = new Quill('#editor-container', {
         theme: 'snow',
-        placeholder: 'Mulai menulis sesuatu yang menakjubkan...',
+        placeholder: 'Start writing something amazing...',
         modules: {
             toolbar: [
                 [{ header: [2, 3, 4, false] }],
@@ -20,8 +20,8 @@
         formatGroup.className = 'ql-formats';
 
         var customButton = document.createElement('button');
-        customButton.innerHTML = '<b>&lt;/&gt;</b>';
-        customButton.title = 'Mode HTML / Kode';
+        customButton.innerHTML = '<b>\u003c/\u003e</b>';
+        customButton.title = 'HTML / Code Mode';
         customButton.type = 'button';
         customButton.style.width = 'auto';
         customButton.style.padding = '0 5px';
@@ -76,7 +76,7 @@
             if (!file) return;
 
             var statusText = document.getElementById('uploadStatus');
-            statusText.innerText = 'Mengunggah ke awan...';
+            statusText.innerText = 'Uploading to cloud...';
             statusText.className = 'form-text small text-info';
 
             var formData = new FormData();
@@ -90,15 +90,15 @@
                 .then(function (data) {
                     if (data.success) {
                         document.getElementById('coverImageURL').value = data.url;
-                        statusText.innerText = 'Berhasil diunggah!';
+                        statusText.innerText = 'Upload successful!';
                         statusText.className = 'form-text small text-success';
                     } else {
-                        statusText.innerText = 'Gagal: ' + data.message;
+                        statusText.innerText = 'Failed: ' + data.message;
                         statusText.className = 'form-text small text-danger';
                     }
                 })
                 .catch(function (error) {
-                    statusText.innerText = 'Terjadi kesalahan jaringan.';
+                    statusText.innerText = 'Network error occurred.';
                     statusText.className = 'form-text small text-danger';
                     console.error(error);
                 });
@@ -111,14 +111,14 @@
             var content = quill.getText().trim();
 
             if (content.length < 50) {
-                alert('Konten terlalu pendek. Tulis artikel minimal beberapa kalimat sebelum menekan Generate AI.');
+                alert('Content is too short. Write at least a few sentences before pressing Generate AI.');
                 return;
             }
 
             var btn = this;
             var originalBtnText = btn.innerHTML;
 
-            btn.innerHTML = '⏳ Menganalisis...';
+            btn.innerHTML = '⏳ Analyzing...';
             btn.classList.remove('btn-outline-success');
             btn.classList.add('btn-secondary');
             btn.disabled = true;
@@ -129,7 +129,7 @@
                 body: JSON.stringify({ content: content })
             })
                 .then(function (response) {
-                    if (!response.ok) throw new Error('Gagal menghubungi AI');
+                    if (!response.ok) throw new Error('Failed to contact AI');
                     return response.json();
                 })
                 .then(function (data) {
@@ -139,7 +139,7 @@
                     btn.disabled = false;
 
                     if (data.error) {
-                        alert('Error dari AI: ' + data.error);
+                        alert('Error from AI: ' + data.error);
                     } else {
                         document.getElementById('metaTitle').value = data.meta_title || '';
                         document.getElementById('metaDesc').value = data.meta_description || '';
@@ -153,7 +153,7 @@
                 })
                 .catch(function (error) {
                     console.error(error);
-                    alert('Terjadi kesalahan jaringan atau limitasi AI tercapai.');
+                    alert('Network error or AI limit reached.');
                     btn.innerHTML = originalBtnText;
                     btn.classList.remove('btn-secondary');
                     btn.classList.add('btn-outline-success');

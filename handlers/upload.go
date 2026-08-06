@@ -11,7 +11,7 @@ func UploadImage(c *fiber.Ctx) error {
 	url, err := utils.ProcessUpload(c, "image")
 
 	if err != nil {
-		return c.Status(500).JSON(fiber.Map{"success": false, "message": "Gagal mengunggah ke CDN: " + err.Error()})
+		return c.Status(500).JSON(fiber.Map{"success": false, "message": "Failed to upload to CDN: " + err.Error()})
 	}
 
 	return c.JSON(fiber.Map{

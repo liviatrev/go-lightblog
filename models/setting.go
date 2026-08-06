@@ -4,13 +4,13 @@ import (
 	"gorm.io/gorm"
 )
 
-// Helper untuk mengambil nilai pengaturan dengan aman
+// Helper to safely get setting value
 func GetSetting(db *gorm.DB, key string, defaultValue string) string {
 	var setting Setting
-	// Karena Key adalah primary key, kita mencarinya langsung di kolom key
+	// Since Key is primary key, we search directly in the key column
 	result := db.Where("key = ?", key).First(&setting)
 	if result.Error != nil {
-		return defaultValue // Mengembalikan nilai default jika key belum diatur di database
+		return defaultValue // Return default value if key is not set in database
 	}
 	return setting.Value
 }

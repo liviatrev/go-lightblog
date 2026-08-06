@@ -10,55 +10,55 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-// RequireLogin adalah middleware untuk memproteksi rute yang butuh autentikasi
+// RequireLogin is middleware to protect routes that need authentication
 func RequireLogin(c *fiber.Ctx) error {
 	sess, err := config.SessStore.Get(c)
 	loginToken := models.GetSetting(database.DB, "login_token", "admin")
 	if err != nil {
-		// Jika terjadi error baca sesi, anggap tidak terautentikasi
+		// If error reading session, consider unauthenticated
 		return c.Redirect("/login-" + loginToken)
 	}
 
-	// Mengecek apakah key "is_logged_in" ada di dalam sesi
+	// Check if "is_logged_in" key exists in session
 	if sess.Get("is_logged_in") == nil {
-		// Sesi tidak ditemukan atau kedaluwarsa
+		// Session not found or expired
 		return c.Redirect("/login-" + loginToken)
 	}
 
-	// Sesi valid, lanjutkan ke handler tujuan
+	// Session valid, continue to destination handler
 	return c.Next()
 }
 
 func RequireAdmin(c *fiber.Ctx) error {
-	// Panggil config.SessStore sesuai strukturmu
+	// Call config.SessStore according to your structure
 	sess, err := config.SessStore.Get(c)
 	loginToken := models.GetSetting(database.DB, "login_token", "admin")
 	if err != nil {
 		return c.Redirect("/login-" + loginToken)
 	}
 
-	// Pastikan role-nya adalah admin
+	// Make sure role is admin
 	role, ok := sess.Get("role").(string)
 	if !ok || role != "admin" {
-		// Jika editor, lemparkan kembali ke dashboard
+		// If editor, redirect back to dashboard
 		return c.Redirect("/dashboard")
 	}
 
 	return c.Next()
 }
 
-// RequireRole membatasi akses berdasarkan Role pengguna
+// RequireRole restricts access based on user Role
 func RequireRole(allowedRoles ...string) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		// PERBAIKAN: Gunakan konversi tipe aman untuk mencegah server Panic
+		// FIX: Use safe type conversion to prevent server Panic
 		roleVal, ok := c.Locals("user_role").(string) 
 		if !ok || roleVal == "" {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-				"error": "Akses ditolak. Sesi atau peran tidak terdeteksi.",
+				"error": "Access denied. Session or role not detected.",
 			})
 		}
 
-		// Periksa apakah role user ada di daftar role yang diizinkan
+		// Check if user role is in the allowed roles list
 		isAllowed := false
 		for _, role := range allowedRoles {
 			if roleVal == role {
@@ -69,7 +69,7 @@ func RequireRole(allowedRoles ...string) fiber.Handler {
 
 		if !isAllowed {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
-				"error": "Akses dilarang. Anda tidak memiliki izin untuk tindakan ini.",
+				"error": "Access forbidden. You do not have permission for this action.",
 			})
 		}
 
@@ -77,12 +77,12 @@ func RequireRole(allowedRoles ...string) fiber.Handler {
 	}
 }
 
-// RequireAuth memastikan klien memiliki token API yang valid
+// RequireAuth ensures client has a valid API token
 func RequireAuth(c *fiber.Ctx) error {
 	authHeader := c.Get("Authorization")
 	if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"error": "Unauthorized: Token tidak ditemukan atau format salah",
+			"error": "Unauthorized: Token not found or invalid format",
 		})
 	}
 
@@ -90,15 +90,15 @@ func RequireAuth(c *fiber.Ctx) error {
 
 	var user models.User
 	
-	// PERBAIKAN: Menggunakan First() agar GORM melempar error jika token tidak ada
+	// FIX: Using First() so GORM throws error if token doesn't exist
 	if err := database.DB.Where("api_key = ?", tokenString).
 		Select("role", "id").First(&user).Error; err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-				"error": "Unauthorized: Token API tidak valid atau tidak terdaftar",
+				"error": "Unauthorized: API Token invalid or not registered",
 			})
 		}
 
-	// Simpan data role untuk dibaca oleh RequireRole
+	// Store role data for RequireRole to read
 	c.Locals("user_role", user.Role)
 	c.Locals("user_id", user.ID)
 	return c.Next()

@@ -1,6 +1,6 @@
 <!-- views/layouts/main.html -->
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -20,25 +20,25 @@
                     <a class="nav-link px-3 py-2 {{if eq .ActiveMenu "dashboard" }}active{{ end }}" href="/dashboard">Dashboard</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link px-3 py-2 {{if eq .ActiveMenu "posts" }}active{{ end }}" href="/posts">Postingan</a>
+                    <a class="nav-link px-3 py-2 {{if eq .ActiveMenu "posts" }}active{{ end }}" href="/posts">Posts</a>
                 </li>
-                <!-- Tambahan Menu Taksonomi -->
+                <!-- Taxonomy Menu -->
                 <li class="nav-item">
-                    <a class="nav-link px-3 py-2 {{if eq .ActiveMenu "categories" }}active{{ end }}" href="/categories">Kategori</a>
+                    <a class="nav-link px-3 py-2 {{if eq .ActiveMenu "categories" }}active{{ end }}" href="/categories">Categories</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link px-3 py-2 {{if eq .ActiveMenu "tags" }}active{{ end }}" href="/tags">Tag</a>
+                    <a class="nav-link px-3 py-2 {{if eq .ActiveMenu "tags" }}active{{ end }}" href="/tags">Tags</a>
                 </li>
                 {{if eq .UserRole "admin"}}
                 <li class="nav-item">
-                    <a class="nav-link px-3 py-2 {{if eq .ActiveMenu "users" }}active{{ end }}" href="/users">Pengguna</a>
+                    <a class="nav-link px-3 py-2 {{if eq .ActiveMenu "users" }}active{{ end }}" href="/users">Users</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link px-3 py-2 {{if eq .ActiveMenu "settings" }}active{{ end }}" href="/settings">Pengaturan</a>
+                    <a class="nav-link px-3 py-2 {{if eq .ActiveMenu "settings" }}active{{ end }}" href="/settings">Settings</a>
                 </li>
                 {{end}}
                 <li class="nav-item mt-4 px-3">
-                    <!-- Form POST untuk logout aman -->
+                    <!-- Form POST for secure logout -->
                     <form action="/logout" method="POST" class="d-inline w-100">
                         <button type="submit" class="btn btn-link text-danger p-0 m-0 text-decoration-none w-100 text-start align-baseline">
                             Logout
@@ -50,13 +50,13 @@
 
         <!-- Main Content Area -->
         <div class="flex-grow-1">
-            <!-- Header Ringan -->
+            <!-- Light Header -->
             <header class="bg-white shadow-sm p-3 mb-4 d-flex justify-content-between align-items-center">
                 <h4 class="m-0">{{.HeaderTitle}}</h4>
-                <div class="text-muted">Halo, {{.UserName}}</div>
+                <div class="text-muted">Hello, {{.UserName}}</div>
             </header>
 
-            <!-- Bagian ini akan diinjeksi oleh template anak (child template) -->
+            <!-- This section will be injected by the child template -->
             <main class="container-fluid px-4">
                 {{embed}}
             </main>

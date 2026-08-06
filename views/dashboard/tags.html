@@ -6,11 +6,11 @@
             <div class="card-body">
                 <form action="/tags" method="POST">
                     <div class="mb-3">
-                        <label class="form-label fw-bold">Nama Tag</label>
-                        <input type="text" name="name" class="form-control" required placeholder="Contoh: Mikrotik">
-                        <div class="form-text small">Slug akan digenerate otomatis.</div>
+                        <label class="form-label fw-bold">Tag Name</label>
+                        <input type="text" name="name" class="form-control" required placeholder="Example: Mikrotik">
+                        <div class="form-text small">Slug will be generated automatically.</div>
                     </div>
-                    <button type="submit" class="btn btn-primary w-100">Tambah Tag</button>
+                    <button type="submit" class="btn btn-primary w-100">Add Tag</button>
                 </form>
             </div>
         </div>
@@ -22,9 +22,9 @@
                 <table class="table table-hover mb-0">
                     <thead class="table-light">
                         <tr>
-                            <th class="px-4 py-3">Nama</th>
+                            <th class="px-4 py-3">Name</th>
                             <th class="py-3">Slug</th>
-                            <th class="px-4 py-3 text-end">Aksi</th>
+                            <th class="px-4 py-3 text-end">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -33,8 +33,8 @@
                             <td class="px-4 py-3 fw-bold">{{.Name}}</td>
                             <td class="py-3 text-muted">{{.Slug}}</td>
                             <td class="px-4 py-3 text-end">
-                                <form action="/tags/delete/{{.ID}}" method="POST" class="d-inline" data-confirm="Hapus tag ini?">
-                                    <button type="submit" class="btn btn-sm btn-outline-danger">Hapus</button>
+                                <form action="/tags/delete/{{.ID}}" method="POST" class="d-inline" data-confirm="Delete this tag?">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
                                 </form>
                             </td>
                         </tr>

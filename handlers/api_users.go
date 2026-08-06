@@ -15,12 +15,12 @@ import (
 func ApiGetUsers(c *fiber.Ctx) error {
 	var users []models.User
 
-	// Mengambil semua data pengguna.
-	// Pastikan pada models.User, kolom password sudah memakai tag json:"-"
+	// Get all user data.
+	// Make sure in models.User, the password column already uses json:"-" tag
 	if err := database.DB.Find(&users).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"success": false,
-			"message": "Gagal mengambil data pengguna",
+			"message": "Failed to fetch user data",
 		})
 	}
 
@@ -31,7 +31,7 @@ func ApiGetUsers(c *fiber.Ctx) error {
 }
 
 // ========================================================
-// 2. CREATE USER (Dengan Hashing Password)
+// 2. CREATE USER (With Password Hashing)
 // ========================================================
 type CreateUserRequest struct {
 	Username string `json:"username" form:"username"`
@@ -47,14 +47,14 @@ func ApiCreateUser(c *fiber.Ctx) error {
 	if err := c.BodyParser(req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"success": false,
-			"message": "Format request tidak valid",
+			"message": "Invalid request format",
 		})
 	}
 
 	if req.Username == "" || req.Password == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"success": false,
-			"message": "Username dan Password wajib diisi",
+			"message": "Username and Password are required",
 		})
 	}
 
@@ -62,7 +62,7 @@ func ApiCreateUser(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"success": false,
-			"message": "Gagal memproses kata sandi",
+			"message": "Failed to process password",
 		})
 	}
 
@@ -78,47 +78,47 @@ func ApiCreateUser(c *fiber.Ctx) error {
 		newUser.Role = "editor"
 	}
 
-	// Simpan ke Database
+	// Save to Database
 	if err := database.DB.Create(&newUser).Error; err != nil {
-		// Asumsi error karena duplikasi (Username sudah terdaftar)
+		// Assume error due to duplication (Username already registered)
 		return c.Status(fiber.StatusConflict).JSON(fiber.Map{
 			"success": false,
-			"message": "Gagal membuat pengguna. Username mungkin sudah digunakan.",
+			"message": "Failed to create user. Username may already be in use.",
 		})
 	}
 
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
 		"success": true,
-		"message": "Pengguna berhasil ditambahkan!",
-		"data":    newUser, // Password otomatis tersembunyi berkat json:"-" di struct model
+		"message": "User added successfully!",
+		"data":    newUser, // Password automatically hidden thanks to json:"-" in model struct
 	})
 }
 
 // ========================================================
-// 3. UPDATE USER (Parsial)
+// 3. UPDATE USER (Partial)
 // ========================================================
 func ApiUpdateUser(c *fiber.Ctx) error {
 	id := c.Params("id")
 	var user models.User
 
-	// 1. Pastikan pengguna ada
+	// 1. Make sure user exists
 	if err := database.DB.First(&user, id).Error; err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 			"success": false,
-			"message": "Pengguna tidak ditemukan",
+			"message": "User not found",
 		})
 	}
 
-	// 2. Parsing request JSON ke dalam bentuk Map yang fleksibel
+	// 2. Parse request JSON into a flexible Map form
 	var input map[string]interface{}
 	if err := c.BodyParser(&input); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"success": false,
-			"message": "Format request tidak valid. Pastikan mengirim format JSON.",
+			"message": "Invalid request format. Make sure to send JSON format.",
 		})
 	}
 
-	// 3. Siapkan keranjang data untuk GORM (kolom di-mapping sesuai database)
+	// 3. Prepare data container for GORM (columns mapped to database)
 	updateData := make(map[string]interface{})
 
 	if val, ok := input["username"]; ok {
@@ -131,39 +131,39 @@ func ApiUpdateUser(c *fiber.Ctx) error {
 		updateData["role"] = val
 	}
 
-	// 4. Penanganan Khusus: Hashing Password jika pengguna ingin mengubahnya
+	// 4. Special Handling: Hash Password if user wants to change it
 	if val, ok := input["password"]; ok {
 		passwordStr, isString := val.(string)
 
-		// Hanya proses jika password berupa string dan tidak kosong
+		// Only process if password is a string and not empty
 		if isString && passwordStr != "" {
 			hashedPassword, err := bcrypt.GenerateFromPassword([]byte(passwordStr), bcrypt.DefaultCost)
 			if err != nil {
 				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 					"success": false,
-					"message": "Gagal memproses kata sandi baru",
+					"message": "Failed to process new password",
 				})
 			}
 			updateData["password"] = string(hashedPassword)
 		}
 	}
 
-	// 5. Eksekusi Update ke Database HANYA jika ada data di keranjang
+	// 5. Execute Update to Database ONLY if there is data in container
 	if len(updateData) > 0 {
 		if err := database.DB.Model(&user).Updates(updateData).Error; err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"success": false,
-				"message": "Gagal memperbarui data pengguna. Username mungkin sudah terpakai.",
+				"message": "Failed to update user data. Username may already be in use.",
 			})
 		}
 	}
 
-	// 6. Muat ulang data terbaru (agar response tidak mengembalikan data usang)
+	// 6. Reload latest data (so response doesn't return stale data)
 	database.DB.First(&user, id)
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"success": true,
-		"message": "Data pengguna berhasil diperbarui!",
+		"message": "User data updated successfully!",
 		"data":    user,
 	})
 }
@@ -178,22 +178,22 @@ func ApiDeleteUser(c *fiber.Ctx) error {
 	if err := database.DB.First(&user, id).Error; err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 			"success": false,
-			"message": "Pengguna tidak ditemukan",
+			"message": "User not found",
 		})
 	}
 
-	// Hapus pengguna
-	// Catatan: Jika di models.User kamu menambahkan gorm.DeletedAt,
-	// maka ini otomatis menjadi Soft Delete seperti pada Posts.
+	// Delete user
+	// Note: If you add gorm.DeletedAt in models.User,
+	// this automatically becomes Soft Delete like on Posts.
 	if err := database.DB.Delete(&user).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"success": false,
-			"message": "Gagal menghapus pengguna",
+			"message": "Failed to delete user",
 		})
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"success": true,
-		"message": "Pengguna berhasil dihapus",
+		"message": "User deleted successfully",
 	})
 }

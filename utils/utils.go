@@ -31,7 +31,7 @@ import (
 // 1. CRYPTO / RANDOM GENERATORS
 // ============================================================
 
-// GenerateAPIKey membuat API Key acak sepanjang 32 byte (64 karakter hex)
+// GenerateAPIKey creates a random API Key of 32 bytes (64 hex characters)
 func GenerateAPIKey() string {
 	bytes := make([]byte, 32)
 	if _, err := rand.Read(bytes); err != nil {
@@ -40,7 +40,7 @@ func GenerateAPIKey() string {
 	return hex.EncodeToString(bytes)
 }
 
-// GenerateRandomHex membuat string hex acak dengan panjang bytes tertentu
+// GenerateRandomHex creates a random hex string with a specific byte length
 func GenerateRandomHex(byteLen int) string {
 	bytes := make([]byte, byteLen)
 	rand.Read(bytes)
@@ -53,38 +53,38 @@ func GenerateRandomHex(byteLen int) string {
 
 var slugRegex = regexp.MustCompile(`[^a-z0-9]+`)
 
-// GenerateSlug membuat slug URL dari string input
-// (versi ROBUST: lowercase, hapus non-alphanumeric, ganti dengan strip)
+// GenerateSlug creates a URL slug from input string
+// (ROBUST version: lowercase, remove non-alphanumeric, replace with dash)
 func GenerateSlug(title string) string {
 	slug := strings.ToLower(title)
 	slug = slugRegex.ReplaceAllString(slug, "-")
 	return strings.Trim(slug, "-")
 }
 
-// GenerateUniqueSlug membuat slug yang unik di tabel posts
-// Jika sudah ada slug yang sama, tambahkan suffix timestamp
-// Parameter excludeID opsional: untuk mengabaikan ID tertentu saat edit post
+// GenerateUniqueSlug creates a unique slug in the posts table
+// If a slug already exists, add a timestamp suffix
+// excludeID parameter is optional: to ignore a specific ID when editing a post
 func GenerateUniqueSlug(title string, excludeID ...uint) string {
 	slug := GenerateSlug(title)
 
 	var count int64
 	query := database.DB.Model(&models.Post{}).Where("slug = ?", slug)
 
-	// Jika ada excludeID (mode edit), abaikan ID sendiri
+	// If excludeID exists (edit mode), ignore own ID
 	if len(excludeID) > 0 {
 		query = query.Where("id != ?", excludeID[0])
 	}
 
 	query.Count(&count)
 	if count > 0 {
-		// Tambahkan timestamp + suffix acak agar tidak bentrok saat dibuat dalam detik yang sama
+		// Add timestamp + random suffix to avoid collision when created in the same second
 		slug = slug + "-" + time.Now().Format("150405") + "-" + GenerateRandomHex(2)
 	}
 	return slug
 }
 
-// GenerateSimpleSlug adalah slug sederhana (hanya replace spasi dengan strip)
-// untuk kompatibilitas lama, sebaiknya gunakan GenerateSlug untuk kasus baru
+// GenerateSimpleSlug is a simple slug (only replaces spaces with dashes)
+// for backward compatibility, use GenerateSlug for new cases
 func GenerateSimpleSlug(title string) string {
 	return strings.ToLower(strings.ReplaceAll(title, " ", "-"))
 }
@@ -93,14 +93,14 @@ func GenerateSimpleSlug(title string) string {
 // 3. TYPE CONVERSION HELPERS
 // ============================================================
 
-// ParseUint konversi string ke uint (aman tanpa error return)
+// ParseUint converts string to uint (safe without error return)
 func ParseUint(s string) uint {
 	var n uint
 	fmt.Sscanf(s, "%d", &n)
 	return n
 }
 
-// ParseUintStrict konversi string ke uint dengan error handling
+// ParseUintStrict converts string to uint with error handling
 func ParseUintStrict(s string) (uint, error) {
 	n, err := strconv.Atoi(s)
 	if err != nil {
@@ -113,7 +113,7 @@ func ParseUintStrict(s string) (uint, error) {
 // 4. SESSION / AUTH HELPERS
 // ============================================================
 
-// SessionUser menampung data user dari session yang sering diakses
+// SessionUser holds user data from session that is frequently accessed
 type SessionUser struct {
 	Session  *session.Session
 	UserID   uint
@@ -121,8 +121,8 @@ type SessionUser struct {
 	UserRole string
 }
 
-// GetSessionUser mengekstrak data user dari session secara aman
-// (menghilangkan pola .(string) casting berulang di semua handler)
+// GetSessionUser extracts user data from session safely
+// (eliminates repeated .(string) casting pattern in all handlers)
 func GetSessionUser(c *fiber.Ctx) SessionUser {
 	sess, _ := config.SessStore.Get(c)
 
@@ -151,7 +151,7 @@ func GetSessionUser(c *fiber.Ctx) SessionUser {
 // 5. SITE / CMS SETTING HELPERS
 // ============================================================
 
-// GetSiteTitle mengambil judul situs dari DB dengan fallback
+// GetSiteTitle gets site title from DB with fallback
 func GetSiteTitle() string {
 	var setting models.Setting
 	if err := database.DB.Where("key = ?", "site_title").First(&setting).Error; err != nil {
@@ -160,7 +160,7 @@ func GetSiteTitle() string {
 	return setting.Value
 }
 
-// GetNavbarData mengambil data Kategori dan Halaman Statis untuk menu navigasi
+// GetNavbarData gets Category and Static Page data for navigation menu
 func GetNavbarData() fiber.Map {
 	var categories []models.Category
 	database.DB.Find(&categories)
@@ -180,7 +180,7 @@ func GetNavbarData() fiber.Map {
 // 6. FILE UPLOAD HELPERS
 // ============================================================
 
-// ProcessUpload menangani upload file (gambar) dengan mode: local atau ImageKit CDN
+// ProcessUpload handles file upload (image) with mode: local or ImageKit CDN
 func ProcessUpload(c *fiber.Ctx, formField string) (string, error) {
 	fileHeader, err := c.FormFile(formField)
 	if err != nil {
@@ -190,10 +190,10 @@ func ProcessUpload(c *fiber.Ctx, formField string) (string, error) {
 	originalFilename := SanitizeFilename(fileHeader.Filename)
 	ext := strings.ToLower(filepath.Ext(originalFilename))
 
-	// Hanya izinkan tipe gambar raster untuk mencegah upload file berbahaya
-	// (mis. HTML/SVG yang bisa dieksekusi saat disajikan dari folder statis)
+	// Only allow raster image types to prevent dangerous file uploads
+	// (e.g. HTML/SVG that can be executed when served from static folder)
 	if !isAllowedImageExt(ext) {
-		return "", fmt.Errorf("tipe file tidak diizinkan")
+		return "", fmt.Errorf("file type not allowed")
 	}
 
 	nameOnly := strings.TrimSuffix(originalFilename, ext)
@@ -217,7 +217,7 @@ func ProcessUpload(c *fiber.Ctx, formField string) (string, error) {
 		return "/public/uploads/" + filename, nil
 	}
 
-	// Logika ImageKit CDN
+	// ImageKit CDN logic
 	file, err := fileHeader.Open()
 	if err != nil {
 		return "", err
@@ -243,11 +243,11 @@ func ProcessUpload(c *fiber.Ctx, formField string) (string, error) {
 	return resp.URL, nil
 }
 
-// SanitizeFilename membersihkan nama file upload dari path traversal dan karakter berbahaya.
+// SanitizeFilename cleans upload filename from path traversal and dangerous characters.
 func SanitizeFilename(name string) string {
-	// Normalisasi path Windows lalu ambil komponen file saja
+	// Normalize Windows path then take only the file component
 	base := filepath.Base(strings.ReplaceAll(name, "\\", "/"))
-	// Hapus karakter kontrol / separator yang tersisa
+	// Remove remaining control / separator characters
 	base = strings.Map(func(r rune) rune {
 		switch r {
 		case '/', '\\', '\x00', '\n', '\r':
@@ -262,7 +262,7 @@ func SanitizeFilename(name string) string {
 	return base
 }
 
-// isAllowedImageExt memeriksa apakah ekstensi file termasuk daftar gambar raster yang diizinkan.
+// isAllowedImageExt checks if file extension is in the allowed raster image list.
 func isAllowedImageExt(ext string) bool {
 	switch ext {
 	case ".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp":
@@ -275,32 +275,32 @@ func isAllowedImageExt(ext string) bool {
 // 7. IMAGE PROCESSING / THUMBNAIL HELPERS
 // ============================================================
 
-// ResizeAndCacheThumbnail meresize gambar lokal dan menyimpannya sebagai cache
-// Dipakai oleh ImageThumbProxy di handlers/media.go
+// ResizeAndCacheThumbnail resizes local image and saves it as cache
+// Used by ImageThumbProxy in handlers/media.go
 func ResizeAndCacheThumbnail(src string, w int) (string, error) {
-	// Validasi keamanan (Mencegah Path Traversal)
+	// Security validation (Prevent Path Traversal)
 	if !strings.HasPrefix(src, "/public/uploads/") || strings.Contains(src, "..") {
-		return "", fmt.Errorf("akses ditolak")
+		return "", fmt.Errorf("access denied")
 	}
 
 	localPath := "." + src
 
-	// Mencegah OOM: batasi ukuran gambar sumber (decompression bomb guard)
+	// Prevent OOM: limit source image size (decompression bomb guard)
 	f, err := os.Open(localPath)
 	if err != nil {
-		return "", fmt.Errorf("gambar asli tidak ditemukan")
+		return "", fmt.Errorf("original image not found")
 	}
 	cfg, _, err := image.DecodeConfig(f)
 	f.Close()
 	if err != nil {
-		return "", fmt.Errorf("format gambar tidak didukung")
+		return "", fmt.Errorf("unsupported image format")
 	}
 	const maxSourceDim = 8000
 	if cfg.Width <= 0 || cfg.Height <= 0 || cfg.Width > maxSourceDim || cfg.Height > maxSourceDim {
-		return "", fmt.Errorf("gambar terlalu besar")
+		return "", fmt.Errorf("image too large")
 	}
 
-	// Mencegah OOM: batasi lebar thumbnail yang diminta (0 < w <= 2000)
+	// Prevent OOM: limit requested thumbnail width (0 < w <= 2000)
 	if w <= 0 {
 		w = 600
 	}
@@ -310,51 +310,51 @@ func ResizeAndCacheThumbnail(src string, w int) (string, error) {
 
 	base := strings.TrimSuffix(filepath.Base(localPath), filepath.Ext(localPath))
 	thumbDir := "./public/uploads/thumbs"
-	// Selalu gunakan ekstensi .jpg karena output dikodekan sebagai JPEG
+	// Always use .jpg extension because output is encoded as JPEG
 	thumbPath := fmt.Sprintf("%s/w%d_%s.jpg", thumbDir, w, base)
 
-	// 1. Cek Cache
+	// 1. Check Cache
 	if _, err := os.Stat(thumbPath); err == nil {
 		return thumbPath, nil
 	}
 
-	// 2. Buka gambar asli
+	// 2. Open original image
 	imgFile, err := os.Open(localPath)
 	if err != nil {
-		return "", fmt.Errorf("gambar asli tidak ditemukan")
+		return "", fmt.Errorf("original image not found")
 	}
 	defer imgFile.Close()
 	img, err := imaging.Decode(imgFile, imaging.AutoOrientation(true))
 	if err != nil {
-		return "", fmt.Errorf("format gambar tidak didukung")
+		return "", fmt.Errorf("unsupported image format")
 	}
 
-	// 3. Buat folder thumbs jika belum ada
+	// 3. Create thumbs folder if not exists
 	if err := os.MkdirAll(thumbDir, 0755); err != nil {
-		return "", fmt.Errorf("gagal menyimpan thumbnail")
+		return "", fmt.Errorf("failed to save thumbnail")
 	}
 
-	// 4. Resize dengan algoritma Lanczos
+	// 4. Resize with Lanczos algorithm
 	resizedImg := imaging.Resize(img, w, 0, imaging.Lanczos)
 
-	// 5. Simpan ke file sementara lalu rename agar aman dari race
-	// (dua request bersamaan untuk thumbnail yang sama tidak saling merusak)
+	// 5. Save to temp file then rename for race safety
+	// (two concurrent requests for the same thumbnail won't corrupt each other)
 	tmp, err := os.CreateTemp(thumbDir, "thumb-*.tmp")
 	if err != nil {
-		return "", fmt.Errorf("gagal menyimpan thumbnail")
+		return "", fmt.Errorf("failed to save thumbnail")
 	}
 	tmpName := tmp.Name()
 	encodeErr := imaging.Encode(tmp, resizedImg, imaging.JPEG, imaging.JPEGQuality(70))
 	closeErr := tmp.Close()
 	if encodeErr != nil || closeErr != nil {
 		os.Remove(tmpName)
-		return "", fmt.Errorf("gagal menyimpan thumbnail")
+		return "", fmt.Errorf("failed to save thumbnail")
 	}
 	if err := os.Rename(tmpName, thumbPath); err != nil {
 		os.Remove(tmpName)
-		return "", fmt.Errorf("gagal menyimpan thumbnail")
+		return "", fmt.Errorf("failed to save thumbnail")
 	}
-	// Pastikan thumbnail dapat dibaca oleh proses lain (mis. reverse proxy)
+	// Ensure thumbnail is readable by other processes (e.g. reverse proxy)
 	os.Chmod(thumbPath, 0644)
 
 	return thumbPath, nil
@@ -364,39 +364,39 @@ func ResizeAndCacheThumbnail(src string, w int) (string, error) {
 // 8. SEO / AI HELPERS
 // ============================================================
 
-// SEOData struktur output dari AI SEO Generator
+// SEOData output structure from AI SEO Generator
 type SEOData struct {
 	MetaTitle       string `json:"meta_title"`
 	MetaDescription string `json:"meta_description"`
 	TargetKeyword   string `json:"target_keyword"`
 }
 
-// SEORequest struktur input untuk generate SEO via API
+// SEORequest input structure for generating SEO via API
 type SEORequest struct {
 	Content string `json:"content"`
 }
 
-// ProcessSEOInternal memanggil Gemini AI untuk generate metadata SEO dari konten
+// ProcessSEOInternal calls Gemini AI to generate SEO metadata from content
 func ProcessSEOInternal(content string) (*SEOData, error) {
 	apiKey := models.GetSetting(database.DB, "gemini_api_key", "")
 	selectedModel := models.GetSetting(database.DB, "gemini_model", "gemini-3.6-flash")
 
 	if apiKey == "" {
-		return nil, fmt.Errorf("gemini API Key belum diatur")
+		return nil, fmt.Errorf("gemini API Key not configured")
 	}
 
 	ctx := context.Background()
 	client, err := genai.NewClient(ctx, &genai.ClientConfig{APIKey: apiKey})
 	if err != nil {
-		return nil, fmt.Errorf("gagal inisialisasi AI client: %v", err)
+		return nil, fmt.Errorf("failed to initialize AI client: %v", err)
 	}
 
-	prompt := `Sebagai pakar SEO, analisis konten artikel berikut. 
-Hasilkan metadata SEO dalam bahasa yang sesuai dengan artikel.
-Kembalikan dalam format JSON murni persis dengan skema ini tanpa markdown block:
-{"meta_title": "Judul maksimal 60 karakter", "meta_description": "Deskripsi maksimal 160 karakter", "target_keyword": "1-4 kata kunci utama"}
+	prompt := `As an SEO expert, analyze the following article content. 
+Generate SEO metadata in the language matching the article.
+Return in pure JSON format exactly matching this schema without markdown block:
+{"meta_title": "Title max 60 characters", "meta_description": "Description max 160 characters", "target_keyword": "1-4 main keywords"}
 
-Konten Artikel:
+Article Content:
 ` + content
 
 	cfg := &genai.GenerateContentConfig{
@@ -405,17 +405,17 @@ Konten Artikel:
 
 	resp, err := client.Models.GenerateContent(ctx, selectedModel, genai.Text(prompt), cfg)
 	if err != nil {
-		return nil, fmt.Errorf("gagal dari AI: %v", err)
+		return nil, fmt.Errorf("failed from AI: %v", err)
 	}
 
 	if resp != nil && resp.Text() != "" {
 		var seoData SEOData
 		err := json.Unmarshal([]byte(resp.Text()), &seoData)
 		if err != nil {
-			return nil, fmt.Errorf("gagal mem-parsing JSON dari AI: %v", err)
+			return nil, fmt.Errorf("failed to parse JSON from AI: %v", err)
 		}
 		return &seoData, nil
 	}
 
-	return nil, fmt.Errorf("respon AI kosong")
+	return nil, fmt.Errorf("empty AI response")
 }

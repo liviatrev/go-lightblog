@@ -3,10 +3,10 @@
     <div class="col-md-4">
         <div class="card shadow-sm border-0">
             <div class="card-body">
-                <h5 class="card-title text-muted">Total Postingan</h5>
-                <!-- Tampilkan variabel TotalPosts -->
+                <h5 class="card-title text-muted">Total Posts</h5>
+                <!-- Display TotalPosts variable -->
                 <h2 class="display-4 fw-bold">{{.TotalPosts}}</h2>
-                <a href="/posts/create" class="btn btn-sm btn-outline-primary mt-2">Tulis Baru</a>
+                <a href="/posts/create" class="btn btn-sm btn-outline-primary mt-2">Write New</a>
             </div>
         </div>
     </div>
@@ -14,7 +14,7 @@
     <div class="col-md-8">
         <div class="card shadow-sm border-0 h-100">
             <div class="card-body">
-                <h5 class="card-title mb-4">Aktivitas Terbaru (Diedit / Dibuat)</h5>
+                <h5 class="card-title mb-4">Recent Activity (Edited / Created)</h5>
                 
                 {{if .RecentPosts}}
                     <div class="list-group list-group-flush">
@@ -29,7 +29,7 @@
                                         {{if .IsDraft}}
                                             <span class="badge bg-secondary me-1">Draft</span>
                                         {{end}}
-                                        Diperbarui pada {{.UpdatedAt.Format "02 Jan 2006, 15:04"}}
+                                        Updated on {{.UpdatedAt.Format "02 Jan 2006, 15:04"}}
                                     </small>
                                 </div>
                                 <a href="/posts/edit/{{.ID}}" class="btn btn-sm btn-light">Edit</a>
@@ -38,8 +38,8 @@
                         {{end}}
                     </div>
                 {{else}}
-                    <!-- Tampil jika RecentPosts kosong -->
-                    <p class="text-muted mt-3">Belum ada aktivitas. Mulai menulis postingan pertamamu!</p>
+                    <!-- Display if RecentPosts is empty -->
+                    <p class="text-muted mt-3">No activity yet. Start writing your first post!</p>
                 {{end}}
             </div>
         </div>

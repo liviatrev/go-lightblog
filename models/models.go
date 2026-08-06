@@ -7,65 +7,65 @@ import (
 	"gorm.io/gorm"
 )
 
-// User sekarang mendukung RBAC dan API Key
+// User now supports RBAC and API Key
 type User struct {
 	ID       uint   `gorm:"primaryKey"`
 	Username string `gorm:"uniqueIndex;not null"`
 	Password string `gorm:"not null" json:"-"`
-	Name     string `gorm:"not null"`             // Nama Tampilan (Author)
-	Role     string `gorm:"default:'editor'"`     // 'admin' atau 'editor'
-	APIKey   string `gorm:"uniqueIndex;not null" json:"-"` // Untuk akses Headless API
-	Posts    []Post `gorm:"foreignKey:AuthorID" json:"posts,omitempty"`  // Relasi One-to-Many ke Post
+	Name     string `gorm:"not null"`             // Display Name (Author)
+	Role     string `gorm:"default:'editor'"`     // 'admin' or 'editor'
+	APIKey   string `gorm:"uniqueIndex;not null" json:"-"` // For Headless API access
+	Posts    []Post `gorm:"foreignKey:AuthorID" json:"posts,omitempty"`  // One-to-Many relationship to Post
 
 	DeletedAt       gorm.DeletedAt `gorm:"index" json:"-"`
 }
 
-// Setting tetap sama, tapi akan menampung lebih banyak key (Disqus, Gemini API, ImageKit)
+// Setting remains the same, but will hold more keys (Disqus, Gemini API, ImageKit)
 type Setting struct {
 	Key   string `gorm:"primaryKey"`
 	Value string `gorm:"not null"`
 }
 
-// Category (Satu post memiliki satu kategori utama)
+// Category (One post has one main category)
 type Category struct {
 	ID    uint   `gorm:"primaryKey"`
 	Name  string `gorm:"not null"`
 	Slug  string `gorm:"uniqueIndex;not null"`
-	Posts []Post `json:"posts,omitempty"` // Relasi Has-Many
+	Posts []Post `json:"posts,omitempty"` // Has-Many relationship
 }
 
-// Tag (Satu post bisa punya banyak tag, satu tag bisa dimiliki banyak post)
+// Tag (One post can have many tags, one tag can belong to many posts)
 type Tag struct {
 	ID    uint   `gorm:"primaryKey"`
 	Name  string `gorm:"not null"`
 	Slug  string `gorm:"uniqueIndex;not null"`
-	Posts []Post `gorm:"many2many:post_tags;" json:"posts,omitempty"` // Relasi Many-to-Many
+	Posts []Post `gorm:"many2many:post_tags;" json:"posts,omitempty"` // Many-to-Many relationship
 }
 
-// Post berevolusi dengan kolom SEO, Author, dan Relasi
+// Post evolved with SEO columns, Author, and Relationships
 type Post struct {
 	ID              uint      `gorm:"primaryKey"`
 	Title           string    `gorm:"not null"`
 	Slug            string    `gorm:"uniqueIndex;not null"`
 	Content         string    
 	IsDraft         bool      
-	CoverImage      string    // URL gambar dari CDN (ImageKit/S3)
+	CoverImage      string    // Image URL from CDN (ImageKit/S3)
 	Type            string    `gorm:"type:varchar(20);default:'post'"`
 	
-	// Kolom Khusus SEO
+	// SEO-specific columns
 	MetaTitle       string
 	MetaDescription string
 	TargetKeyword   string
 
-	// Relasi ke User (Author)
+	// Relationship to User (Author)
 	AuthorID        uint
 	Author          User      `gorm:"foreignKey:AuthorID"`
 
-	// Relasi ke Category
+	// Relationship to Category
 	CategoryID      uint
 	Category        Category  `gorm:"foreignKey:CategoryID"`
 
-	// Relasi ke Tag (Many-to-Many)
+	// Relationship to Tag (Many-to-Many)
 	Tags            []Tag     `gorm:"many2many:post_tags;"`
 
 	CreatedAt time.Time

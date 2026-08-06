@@ -7,16 +7,16 @@ import (
 )
 
 func CheckSetup(c *fiber.Ctx) error {
-	// Pengecualian: Izinkan akses ke file statis (CSS/JS/Img)
-	// Kita tidak ingin halaman setup tampil tanpa styling CSS
+	// Exception: Allow access to static files (CSS/JS/Img)
+	// We don't want the setup page to appear without CSS styling
 	if len(c.Path()) >= 7 && c.Path()[:7] == "/public" {
 		return c.Next()
 	}
 
-	// Jika CMS sudah di-setup, ATAU user memang sedang berada di jalur /setup
-	// Biarkan lewat.
+	// If CMS is already set up, OR user is currently on /setup path
+	// Let them through.
 	if config.AppSetupCompleted || c.Path() == "/setup" || c.Path() == "/setup/process" {
-		// Proteksi ekstra: Jika sudah setup tapi memaksa akses /setup, lempar ke depan
+		// Extra protection: If already set up but forcing /setup access, redirect forward
 		if config.AppSetupCompleted && (c.Path() == "/setup" || c.Path() == "/setup/process") {
 			return c.Redirect("/")
 		}
@@ -24,6 +24,6 @@ func CheckSetup(c *fiber.Ctx) error {
 		return c.Next()
 	}
 
-	// Jika belum setup dan mengakses rute selain /setup, lempar secara paksa
+	// If not set up and accessing route other than /setup, force redirect
 	return c.Redirect("/setup")
 }

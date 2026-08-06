@@ -30,8 +30,8 @@ func ListPosts(c *fiber.Ctx) error {
 
 	su := utils.GetSessionUser(c)
 	return c.Render("dashboard/posts_list", fiber.Map{
-		"Title":       "Daftar Postingan",
-		"HeaderTitle": "Manajemen Postingan",
+		"Title":       "Post List",
+		"HeaderTitle": "Manage Posts",
 		"ActiveMenu":  "posts",
 		"Posts":       posts,
 		"CurrentPage": page,
@@ -55,8 +55,8 @@ func CreatePostView(c *fiber.Ctx) error {
 	enableGemini := models.GetSetting(database.DB, "enable_gemini", "no")
 
 	return c.Render("dashboard/posts_create", fiber.Map{
-		"Title":        "Tulis Postingan Baru",
-		"HeaderTitle":  "Tulis Artikel",
+		"Title":        "Write New Post",
+		"HeaderTitle":  "Write Article",
 		"ActiveMenu":   "posts",
 		"Categories":   categories,
 		"Tags":         tags,
@@ -78,7 +78,7 @@ func ProcessCreatePost(c *fiber.Ctx) error {
 	isDraft := c.FormValue("isDraft") == "true"
 
 	if title == "" || content == "" {
-		return c.Status(fiber.StatusBadRequest).SendString("Judul dan Konten tidak boleh kosong")
+		return c.Status(fiber.StatusBadRequest).SendString("Title and Content cannot be empty")
 	}
 
 	categoryID := c.FormValue("category_id")
@@ -112,7 +112,7 @@ func ProcessCreatePost(c *fiber.Ctx) error {
 	}
 
 	if err := database.DB.Create(&post).Error; err != nil {
-		return c.Status(fiber.StatusInternalServerError).SendString("Gagal menyimpan postingan")
+		return c.Status(fiber.StatusInternalServerError).SendString("Failed to save post")
 	}
 
 	return c.Redirect("/posts")
@@ -125,7 +125,7 @@ func EditPostView(c *fiber.Ctx) error {
 	su := utils.GetSessionUser(c)
 
 	if err := database.DB.First(&post, id).Error; err != nil {
-		return c.Status(fiber.StatusNotFound).SendString("Postingan tidak ditemukan")
+		return c.Status(fiber.StatusNotFound).SendString("Post not found")
 	}
 
 	if err := database.DB.Preload("Tags").First(&post, id).Error; err != nil {
@@ -144,7 +144,7 @@ func EditPostView(c *fiber.Ctx) error {
 	enableGemini := models.GetSetting(database.DB, "enable_gemini", "no")
 
 	return c.Render("dashboard/posts_edit", fiber.Map{
-		"Title":           "Edit Postingan",
+		"Title":           "Edit Post",
 		"HeaderTitle":     "Edit: " + post.Title,
 		"ActiveMenu":      "posts",
 		"Post":            post,
@@ -163,14 +163,14 @@ func ProcessEditPost(c *fiber.Ctx) error {
 	var post models.Post
 
 	if err := database.DB.First(&post, id).Error; err != nil {
-		return c.Status(fiber.StatusNotFound).SendString("Postingan tidak ditemukan")
+		return c.Status(fiber.StatusNotFound).SendString("Post not found")
 	}
 
 	title := c.FormValue("title")
 	content := c.FormValue("content")
 
 	if title == "" || content == "" {
-		return c.Status(fiber.StatusBadRequest).SendString("Judul dan Konten tidak boleh kosong")
+		return c.Status(fiber.StatusBadRequest).SendString("Title and Content cannot be empty")
 	}
 
 	if post.Title != title {
@@ -192,7 +192,7 @@ func ProcessEditPost(c *fiber.Ctx) error {
 	post.CategoryID = utils.ParseUint(c.FormValue("category_id"))
 
 	if err := database.DB.Save(&post).Error; err != nil {
-		return c.Status(fiber.StatusInternalServerError).SendString("Gagal mengupdate postingan")
+		return c.Status(fiber.StatusInternalServerError).SendString("Failed to update post")
 	}
 
 	tagsArgs := c.Request().PostArgs().PeekMulti("tags[]")
@@ -207,14 +207,14 @@ func ProcessEditPost(c *fiber.Ctx) error {
 	return c.Redirect("/posts")
 }
 
-// DeletePost menghapus artikel dari database
+// DeletePost deletes an article from the database
 func DeletePost(c *fiber.Ctx) error {
 	id := c.Params("id")
 	
-	// GORM Unscoped untuk hard delete (menghapus permanen)
-	// Jika mau soft delete nanti, hapus .Unscoped()
+	// GORM Unscoped for hard delete (permanent deletion)
+	// If you want soft delete later, remove .Unscoped()
 	if err := database.DB.Unscoped().Delete(&models.Post{}, id).Error; err != nil {
-		return c.Status(fiber.StatusInternalServerError).SendString("Gagal menghapus postingan")
+		return c.Status(fiber.StatusInternalServerError).SendString("Failed to delete post")
 	}
 
 	return c.Redirect("/posts")

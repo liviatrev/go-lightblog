@@ -21,7 +21,7 @@ func ApiGetCategories(c *fiber.Ctx) error {
 	if err := database.DB.Find(&categories).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"success": false,
-			"message": "Gagal mengambil data kategori",
+			"message": "Failed to fetch category data",
 		})
 	}
 
@@ -37,14 +37,14 @@ func ApiCreateCategory(c *fiber.Ctx) error {
 	if err := c.BodyParser(&input); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"success": false,
-			"message": "Format JSON tidak valid",
+			"message": "Invalid JSON format",
 		})
 	}
 
 	if strings.TrimSpace(input.Name) == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"success": false,
-			"message": "Nama kategori tidak boleh kosong",
+			"message": "Category name cannot be empty",
 		})
 	}
 
@@ -60,19 +60,19 @@ func ApiCreateCategory(c *fiber.Ctx) error {
 	if err := database.DB.Create(&category).Error; err != nil {
 		return c.Status(fiber.StatusConflict).JSON(fiber.Map{
 			"success": false,
-			"message": "Gagal menyimpan kategori. Pastikan Slug unik.",
+			"message": "Failed to save category. Make sure Slug is unique.",
 			"error":   err.Error(),
 		})
 	}
 
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
 		"success": true,
-		"message": "Kategori berhasil dibuat",
+		"message": "Category created successfully",
 		"data":    category,
 	})
 }
 
-// ApiUpdateCategory - Memperbarui kategori yang ada
+// ApiUpdateCategory - Updates an existing category
 func ApiUpdateCategory(c *fiber.Ctx) error {
 	id := c.Params("id")
 	var input CategoryInput
@@ -80,20 +80,20 @@ func ApiUpdateCategory(c *fiber.Ctx) error {
 	if err := c.BodyParser(&input); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"success": false,
-			"message": "Format JSON tidak valid",
+			"message": "Invalid JSON format",
 		})
 	}
 
 	var category models.Category
-	// Gunakan First() agar melempar error jika ID tidak ditemukan
+	// Use First() to throw error if ID not found
 	if err := database.DB.First(&category, id).Error; err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 			"success": false,
-			"message": "Kategori tidak ditemukan",
+			"message": "Category not found",
 		})
 	}
 
-	// Update data (hanya jika ada nilainya)
+	// Update data (only if there is a value)
 	if input.Name != "" {
 		category.Name = input.Name
 	}
@@ -104,18 +104,18 @@ func ApiUpdateCategory(c *fiber.Ctx) error {
 	if err := database.DB.Save(&category).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"success": false,
-			"message": "Gagal memperbarui kategori",
+			"message": "Failed to update category",
 		})
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"success": true,
-		"message": "Kategori berhasil diperbarui",
+		"message": "Category updated successfully",
 		"data":    category,
 	})
 }
 
-// ApiDeleteCategory - Menghapus kategori
+// ApiDeleteCategory - Deletes a category
 func ApiDeleteCategory(c *fiber.Ctx) error {
 	id := c.Params("id")
 
@@ -123,19 +123,19 @@ func ApiDeleteCategory(c *fiber.Ctx) error {
 	if err := database.DB.First(&category, id).Error; err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 			"success": false,
-			"message": "Kategori tidak ditemukan",
+			"message": "Category not found",
 		})
 	}
 
 	if err := database.DB.Delete(&category).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"success": false,
-			"message": "Gagal menghapus kategori",
+			"message": "Failed to delete category",
 		})
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"success": true,
-		"message": "Kategori berhasil dihapus",
+		"message": "Category deleted successfully",
 	})
 }

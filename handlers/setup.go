@@ -19,7 +19,7 @@ func SetupView(c *fiber.Ctx) error {
 	}
 
 	return c.Render("setup", fiber.Map{
-		"Title": "Instalasi LightBlog",
+		"Title": "LightBlog Installation",
 	}, "layouts/main")
 }
 
@@ -37,14 +37,14 @@ func SetupProcess(c *fiber.Ctx) error {
 
 	if username == "" || password == "" || siteTitle == "" || name == "" {
 		return c.Render("setup", fiber.Map{
-			"Title": "Instalasi LightBlog",
-			"Error": "Semua kolom (Username, Password, Nama, Judul Situs) wajib diisi",
+			"Title": "LightBlog Installation",
+			"Error": "All fields (Username, Password, Name, Site Title) are required",
 		}, "layouts/main")
 	}
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
-		return c.Status(500).SendString("Kesalahan Server Internal (Bcrypt)")
+		return c.Status(500).SendString("Internal Server Error (Bcrypt)")
 	}
 
 	user := models.User{

@@ -24,13 +24,13 @@ func SettingsView(c *fiber.Ctx) error {
 	enableGemini := models.GetSetting(database.DB, "enable_gemini", "no")
 	geminiKey := models.GetSetting(database.DB, "gemini_api_key", "")
 	geminiModel := models.GetSetting(database.DB, "gemini_model", "gemini-flash-latest")
-	siteDesc := models.GetSetting(database.DB, "site_description", "Blog minimalis dan cepat bertenaga Go Fiber.")
+	siteDesc := models.GetSetting(database.DB, "site_description", "A minimal and fast blog powered by Go Fiber.")
 	siteKeywords := models.GetSetting(database.DB, "site_keywords", "blog, go, fiber, lightblog")
 	loginToken := models.GetSetting(database.DB, "login_token", "admin")
 
 	return c.Render("dashboard/settings", fiber.Map{
-		"Title":           "Pengaturan",
-		"HeaderTitle":     "Pengaturan Sistem",
+		"Title":           "Settings",
+		"HeaderTitle":     "System Settings",
 		"SiteTitle":       siteTitle,
 		"ActiveMenu":      "settings",
 		"Message":         msg,

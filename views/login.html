@@ -1,6 +1,6 @@
 <!-- views/login.html -->
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -16,7 +16,7 @@
             <div class="card-body p-4">
                 <h4 class="card-title text-center mb-4">Login</h4>
                 
-                <!-- Tampilkan pesan error jika login gagal -->
+                <!-- Display error message if login fails -->
                 {{if .Error}}
                 <div class="alert alert-danger" role="alert">
                     {{.Error}}
@@ -26,7 +26,7 @@
                 <form action="/login-{{.LoginToken}}/process" method="POST">
                     <div class="mb-3">
                         <label for="username" class="form-label">Username</label>
-                        <!-- Mengisi kembali value jika terjadi error -->
+                        <!-- Re-fill value if error occurs -->
                         <input type="text" class="form-control" id="username" name="username" value="{{.Username}}" required autofocus>
                     </div>
                     
@@ -37,10 +37,10 @@
 
                     <div class="mb-4 form-check">
                         <input type="checkbox" class="form-check-input" id="remember" name="remember" value="true">
-                        <label class="form-check-label" for="remember">Ingat Saya (7 Hari)</label>
+                        <label class="form-check-label" for="remember">Remember Me (7 Days)</label>
                     </div>
                     
-                    <button type="submit" class="btn btn-primary w-100 fw-bold">Masuk</button>
+                    <button type="submit" class="btn btn-primary w-100 fw-bold">Sign In</button>
                 </form>
             </div>
         </div>

@@ -12,7 +12,7 @@ import (
 )
 
 func ApiGetPosts(c *fiber.Ctx) error {
-	// Dukungan pagination untuk mencegah load seluruh tabel sekaligus
+	// Pagination support to prevent loading the entire table at once
 	limit := c.QueryInt("limit", 50)
 	offset := c.QueryInt("offset", 0)
 	if limit <= 0 || limit > 100 {
@@ -34,7 +34,7 @@ func ApiGetPosts(c *fiber.Ctx) error {
 		Find(&posts).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"success": false,
-			"message": "Gagal mengambil data artikel",
+			"message": "Failed to fetch article data",
 		})
 	}
 
@@ -57,7 +57,7 @@ func ApiCreatePost(c *fiber.Ctx) error {
 	if strings.TrimSpace(title) == "" || strings.TrimSpace(content) == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"success": false,
-			"message": "Judul dan konten tidak boleh kosong",
+			"message": "Title and content cannot be empty",
 		})
 	}
 
@@ -104,7 +104,7 @@ func ApiCreatePost(c *fiber.Ctx) error {
 	if err := database.DB.Create(&post).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"success": false,
-			"message": "Gagal menyimpan artikel",
+			"message": "Failed to save article",
 			"error":   err.Error(),
 		})
 	}
@@ -125,7 +125,7 @@ func ApiCreatePost(c *fiber.Ctx) error {
 
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
 		"success": true,
-		"message": "Artikel berhasil diterbitkan!",
+		"message": "Article published successfully!",
 		"data":    post,
 	})
 }
@@ -137,15 +137,15 @@ func ApiUpdatePost(c *fiber.Ctx) error {
 	if err := database.DB.First(&post, id).Error; err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 			"success": false,
-			"message": "Artikel tidak ditemukan",
+			"message": "Article not found",
 		})
 	}
 
-	// 1. Siapkan keranjang penampung data parsial
-	// Kolom disesuaikan dengan nama kolom GORM di database (snake_case)
+	// 1. Prepare container for partial data
+	// Columns adjusted to GORM database column names (snake_case)
 	updateData := make(map[string]interface{})
 
-	// 2. Baca form multipart untuk mendeteksi kunci apa saja yang dikirim
+	// 2. Read multipart form to detect which keys were sent
 	form, err := c.MultipartForm()
 	if err == nil && form != nil {
 		if values, exists := form.Value["title"]; exists && len(values) > 0 {
@@ -171,31 +171,31 @@ func ApiUpdatePost(c *fiber.Ctx) error {
 		}
 	}
 
-	// 3. Penanganan Gambar Kover Parsial
-	// ProcessUpload akan gagal (err != nil) jika user tidak menyertakan file "cover"
+	// 3. Partial Cover Image Handling
+	// ProcessUpload will fail (err != nil) if user doesn't include "cover" file
 	coverURL, errUpload := utils.ProcessUpload(c, "cover")
 	if errUpload == nil && coverURL != "" {
 		updateData["cover_image"] = coverURL
 	}
 
-	// 4. Eksekusi Partial Update HANYA jika ada data yang dikirim
+	// 4. Execute Partial Update ONLY if there is data sent
 	if len(updateData) > 0 {
 		if err := database.DB.Model(&post).Updates(updateData).Error; err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"success": false,
-				"message": "Gagal menerapkan pembaruan parsial",
+				"message": "Failed to apply partial update",
 			})
 		}
 	}
 
-	// 5. Penanganan Tags (Many-to-Many Pivot)
-	// Karena ini relasi tabel terpisah, harus ditangani di luar Update map
+	// 5. Tags Handling (Many-to-Many Pivot)
+	// Since this is a separate table relationship, must be handled outside Update map
 	if form != nil {
 		if values, exists := form.Value["tags"]; exists && len(values) > 0 {
 			tagsInput := values[0]
 			var tags []models.Tag
 
-			// Jika user mengirim tags kosong (misal ingin menghapus semua tag)
+			// If user sends empty tags (e.g. wants to remove all tags)
 			if tagsInput == "" {
 				database.DB.Model(&post).Association("Tags").Clear()
 			} else {
@@ -206,7 +206,7 @@ func ApiUpdatePost(c *fiber.Ctx) error {
 		}
 	}
 
-	// 6. Reload Data untuk kembalian JSON
+	// 6. Reload Data for JSON response
 	database.DB.Preload("Category").
 		Preload("Tags").
 		Preload("Author", func(db *gorm.DB) *gorm.DB {
@@ -216,7 +216,7 @@ func ApiUpdatePost(c *fiber.Ctx) error {
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"success": true,
-		"message": "Artikel berhasil diperbarui secara parsial!",
+		"message": "Article updated partially successfully!",
 		"data":    post,
 	})
 }
@@ -225,25 +225,25 @@ func ApiDeletePost(c *fiber.Ctx) error {
 	id := c.Params("id")
 	var post models.Post
 
-	// Cek apakah artikel dengan ID tersebut ada
+	// Check if article with that ID exists
 	if err := database.DB.First(&post, id).Error; err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 			"success": false,
-			"message": "Artikel tidak ditemukan",
+			"message": "Article not found",
 		})
 	}
 
-	// Eksekusi Soft Delete
-	// GORM otomatis akan mengisi kolom deleted_at dan TIDAK menghapus baris dari SQLite
+	// Execute Soft Delete
+	// GORM will automatically fill deleted_at column and NOT remove the row from SQLite
 	if err := database.DB.Delete(&post).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"success": false,
-			"message": "Gagal menghapus artikel",
+			"message": "Failed to delete article",
 		})
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"success": true,
-		"message": "Artikel berhasil dipindahkan ke tong sampah",
+		"message": "Article moved to trash successfully",
 	})
 }

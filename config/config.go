@@ -7,17 +7,17 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/session"
 )
 
-// AppSetupCompleted menyimpan status apakah CMS sudah di-setup
+// AppSetupCompleted stores whether the CMS has been set up
 var AppSetupCompleted bool = false
 
-// SessStore adalah variabel global untuk manajemen session
+// SessStore is a global variable for session management
 var SessStore *session.Store
 
 func InitSession() {
 	SessStore = session.New(session.Config{
-		// Kedaluwarsa default jika tidak mencentang "Remember Me" (misal: 2 jam)
+		// Default expiration if "Remember Me" is not checked (e.g. 2 hours)
 		Expiration: 2 * time.Hour, 
-		// Cookie HTTP Only dan SameSite untuk keamanan XSS & CSRF dasar
+		// HTTP Only and SameSite cookies for basic XSS & CSRF security
 		CookieHTTPOnly: true,
 		CookieSameSite: "Strict",
 	})

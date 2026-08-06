@@ -20,7 +20,7 @@ func ApiGetTags(c *fiber.Ctx) error {
 	if err := database.DB.Find(&tags).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"success": false,
-			"message": "Gagal mengambil data tag",
+			"message": "Failed to fetch tag data",
 		})
 	}
 
@@ -36,14 +36,14 @@ func ApiCreateTag(c *fiber.Ctx) error {
 	if err := c.BodyParser(&input); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"success": false,
-			"message": "Format JSON tidak valid",
+			"message": "Invalid JSON format",
 		})
 	}
 
 	if strings.TrimSpace(input.Name) == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"success": false,
-			"message": "Nama tag tidak boleh kosong",
+			"message": "Tag name cannot be empty",
 		})
 	}
 
@@ -59,19 +59,19 @@ func ApiCreateTag(c *fiber.Ctx) error {
 	if err := database.DB.Create(&tag).Error; err != nil {
 		return c.Status(fiber.StatusConflict).JSON(fiber.Map{
 			"success": false,
-			"message": "Gagal menyimpan tag. Pastikan Slug unik.",
+			"message": "Failed to save tag. Make sure Slug is unique.",
 			"error":   err.Error(),
 		})
 	}
 
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
 		"success": true,
-		"message": "Tag berhasil dibuat",
+		"message": "Tag created successfully",
 		"data":    tag,
 	})
 }
 
-// ApiUpdateTag - Memperbarui tag yang ada
+// ApiUpdateTag - Updates an existing tag
 func ApiUpdateTag(c *fiber.Ctx) error {
 	id := c.Params("id")
 	var input TagInput
@@ -79,7 +79,7 @@ func ApiUpdateTag(c *fiber.Ctx) error {
 	if err := c.BodyParser(&input); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"success": false,
-			"message": "Format JSON tidak valid",
+			"message": "Invalid JSON format",
 		})
 	}
 
@@ -87,7 +87,7 @@ func ApiUpdateTag(c *fiber.Ctx) error {
 	if err := database.DB.First(&tag, id).Error; err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 			"success": false,
-			"message": "Tag tidak ditemukan",
+			"message": "Tag not found",
 		})
 	}
 
@@ -101,18 +101,18 @@ func ApiUpdateTag(c *fiber.Ctx) error {
 	if err := database.DB.Save(&tag).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"success": false,
-			"message": "Gagal memperbarui tag",
+			"message": "Failed to update tag",
 		})
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"success": true,
-		"message": "Tag berhasil diperbarui",
+		"message": "Tag updated successfully",
 		"data":    tag,
 	})
 }
 
-// ApiDeleteTag - Menghapus tag
+// ApiDeleteTag - Deletes a tag
 func ApiDeleteTag(c *fiber.Ctx) error {
 	id := c.Params("id")
 
@@ -120,19 +120,19 @@ func ApiDeleteTag(c *fiber.Ctx) error {
 	if err := database.DB.First(&tag, id).Error; err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 			"success": false,
-			"message": "Tag tidak ditemukan",
+			"message": "Tag not found",
 		})
 	}
 
 	if err := database.DB.Delete(&tag).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"success": false,
-			"message": "Gagal menghapus tag",
+			"message": "Failed to delete tag",
 		})
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"success": true,
-		"message": "Tag berhasil dihapus",
+		"message": "Tag deleted successfully",
 	})
 }

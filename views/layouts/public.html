@@ -1,18 +1,18 @@
 <!-- views/layouts/public.html -->
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Jika di halaman post, gunakan judul post. Jika di home, gunakan judul situs -->
+    <!-- If on post page, use post title. If on home, use site title -->
     {{if .Post}}
-        <!-- SEO Khusus Artikel (Diisi oleh Gemini AI) -->
+        <!-- Article-specific SEO (Filled by Gemini AI) -->
         <title>{{if .Post.MetaTitle}}{{.Post.MetaTitle}}{{else}}{{.Post.Title}} - {{.SiteTitle}}{{end}}</title>
         <meta name="description" content="{{if .Post.MetaDescription}}{{.Post.MetaDescription}}{{else}}{{.SiteDescription}}{{end}}">
         <meta name="keywords" content="{{.Post.TargetKeyword}}">
         <meta name="author" content="{{.Post.Author.Name}}">
 
-        <!-- Open Graph / Kartu Sosial Meta -->
+        <!-- Open Graph / Social Card Meta -->
         <meta property="og:type" content="article">
         <meta property="og:title" content="{{if .Post.MetaTitle}}{{.Post.MetaTitle}}{{else}}{{.Post.Title}}{{end}}">
         <meta property="og:description" content="{{if .Post.MetaDescription}}{{.Post.MetaDescription}}{{else}}{{.SiteDescription}}{{end}}">
@@ -28,7 +28,7 @@
         <meta name="twitter:image" content="{{.MetaImageURL}}">
         {{end}}
     {{else}}
-        <!-- SEO Global Beranda -->
+        <!-- Global Homepage SEO -->
         <title>{{.SiteTitle}}</title>
         <meta name="description" content="{{.SiteDescription}}">
         <meta name="keywords" content="{{.SiteKeywords}}">
@@ -46,30 +46,30 @@
     <div class="container public-container">
         <header class="blog-header py-4 mb-5 d-flex justify-content-between align-items-center">
             <a href="/" class="blog-title">{{.SiteTitle}}</a>
-            <!-- Tampilkan link ke dashboard khusus jika ada niat login -->
+            <!-- Show link to dashboard if login intent -->
             <!-- <a href="/login" class="text-muted text-decoration-none small">Admin</a> -->
         </header>
 
         <!-- Header / Navbar -->
         <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom shadow-sm mb-4">
             <div class="container">
-                <!-- Tombol Hamburger untuk Mobile -->
+                <!-- Hamburger Button for Mobile -->
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar" aria-controls="mainNavbar" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
                 
-                <!-- Daftar Menu -->
+                <!-- Menu List -->
                 <div class="collapse navbar-collapse" id="mainNavbar">
                     <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                        <!-- Link Beranda -->
+                        <!-- Home Link -->
                         <li class="nav-item">
-                            <a class="nav-link" href="/">Beranda</a>
+                            <a class="nav-link" href="/">Home</a>
                         </li>
                         
-                        <!-- Dropdown Kategori Dinamis -->
+                        <!-- Dynamic Categories Dropdown -->
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                Kategori
+                                Categories
                             </a>
                             <ul class="dropdown-menu shadow-sm border-0" aria-labelledby="navbarDropdown">
                                 {{range .NavCategories}}
@@ -78,17 +78,17 @@
                             </ul>
                         </li>
                         
-                        <!-- Link Halaman Statis Dinamis (Looping) -->
+                        <!-- Dynamic Static Pages Links (Looping) -->
                         {{range .NavPages}}
                         <li class="nav-item">
                             <a class="nav-link" href="/page/{{.Slug}}">{{.Title}}</a>
                         </li>
                         {{end}}
                     </ul>
-                    <!-- Form Pencarian di Navbar -->
+                    <!-- Search Form in Navbar -->
                     <form action="/search" method="GET" class="d-flex ms-lg-3 mt-2 mt-lg-0" role="search">
                         <div class="input-group input-group-sm">
-                            <input class="form-control" type="search" name="q" placeholder="Cari artikel..." aria-label="Search" value="{{.Query}}" required>
+                            <input class="form-control" type="search" name="q" placeholder="Search articles..." aria-label="Search" value="{{.Query}}" required>
                             <button class="btn btn-outline-secondary" type="submit">
                                 <i class="bi bi-search">🔍</i>
                             </button>
@@ -103,7 +103,7 @@
         </main>
 
         <footer class="mt-5 py-4 border-top text-center text-muted small">
-            &copy; 2026 {{.SiteTitle}}. Dibangun dengan go-lightblog.
+            &copy; 2026 {{.SiteTitle}}. Built with go-lightblog.
         </footer>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>

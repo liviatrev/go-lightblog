@@ -1,6 +1,6 @@
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1 class="h3 mb-0 text-gray-800">{{.HeaderTitle}}</h1>
-    <a href="/users" class="btn btn-outline-secondary btn-sm">Kembali</a>
+    <a href="/users" class="btn btn-outline-secondary btn-sm">Back</a>
 </div>
 
 <div class="row">
@@ -9,8 +9,8 @@
             <div class="card-body p-4">
                 <form action="/users/create" method="POST">
                     <div class="mb-3">
-                        <label class="form-label fw-bold">Nama Tampilan</label>
-                        <input type="text" name="name" class="form-control" placeholder="Contoh: Editor Satu" required>
+                        <label class="form-label fw-bold">Display Name</label>
+                        <input type="text" name="name" class="form-control" placeholder="Example: Editor One" required>
                     </div>
 
                     <div class="mb-3">
@@ -24,14 +24,14 @@
                     </div>
 
                     <div class="mb-4">
-                        <label class="form-label fw-bold">Role (Hak Akses)</label>
+                        <label class="form-label fw-bold">Role (Access Level)</label>
                         <select name="role" class="form-select">
-                            <option value="editor">Editor (Hanya bisa menulis post)</option>
-                            <option value="admin">Admin (Akses penuh)</option>
+                            <option value="editor">Editor (Can only write posts)</option>
+                            <option value="admin">Admin (Full access)</option>
                         </select>
                     </div>
 
-                    <button type="submit" class="btn btn-primary w-100 fw-bold">Simpan Pengguna</button>
+                    <button type="submit" class="btn btn-primary w-100 fw-bold">Save User</button>
                 </form>
             </div>
         </div>

@@ -13,14 +13,14 @@ func ImageThumbProxy(c *fiber.Ctx) error {
 	thumbPath, err := utils.ResizeAndCacheThumbnail(src, w)
 	if err != nil {
 		switch err.Error() {
-		case "akses ditolak":
-			return c.Status(fiber.StatusForbidden).SendString("Akses ditolak")
-		case "gambar asli tidak ditemukan":
-			return c.Status(fiber.StatusNotFound).SendString("Gambar asli tidak ditemukan")
-		case "gambar terlalu besar", "format gambar tidak didukung":
-			return c.Status(fiber.StatusBadRequest).SendString("Parameter gambar tidak valid")
+		case "access denied":
+			return c.Status(fiber.StatusForbidden).SendString("Access denied")
+		case "original image not found":
+			return c.Status(fiber.StatusNotFound).SendString("Original image not found")
+		case "image too large", "unsupported image format":
+			return c.Status(fiber.StatusBadRequest).SendString("Invalid image parameters")
 		default:
-			return c.Status(fiber.StatusInternalServerError).SendString("Gagal memproses thumbnail")
+			return c.Status(fiber.StatusInternalServerError).SendString("Failed to process thumbnail")
 		}
 	}
 

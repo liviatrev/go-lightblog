@@ -25,69 +25,69 @@ func main() {
 	dbPath := flag.String("db", "lightblog.db", "File database")
 	flag.Parse()
 
-	// Inisialisasi Database
+	// Initialize Database
 	database.Connect(*dbPath)
 
-	// Inisialisasi Session Store
+	// Initialize Session Store
 	config.InitSession()
 
-	// Inisialisasi Fiber HTML Template Engine
-	// Mengarah ke folder "views" dengan ekstensi ".html"
+	// Initialize Fiber HTML Template Engine
+	// Points to "views" folder with ".html" extension
 	engine := html.New("./views", ".html")
 
-	// Tambahkan fungsi kustom agar HTML bisa dirender
+	// Add custom function so HTML can be rendered
 	engine.AddFunc("unescape", func(s string) template.HTML {
 		return template.HTML(s)
 	})
 
-	// Tambahkan Fungsi Kustom (Bisa dipanggil di HTML)
+	// Add Custom Function (Can be called in HTML)
 	engine.AddFunc("thumb", func(url string, width int) string {
 		if url == "" {
-			return "/public/assets/default-cover.jpg" // URL gambar default jika pos tidak punya kover
+			return "/public/assets/default-cover.jpg" // Default image URL if post has no cover
 		}
 		
-		// Skenario 1: Jika gambar berasal dari ImageKit CDN
+		// Scenario 1: If image comes from ImageKit CDN
 		if strings.Contains(url, "imagekit.io") {
-			// ImageKit menggunakan parameter query ?tr=w-XXX
+			// ImageKit uses query parameter ?tr=w-XXX
 			if strings.Contains(url, "?") {
 				return fmt.Sprintf("%s&tr=w-%d,q-70,f-webp", url, width)
 			}
 			return fmt.Sprintf("%s?tr=w-%d,q-70,f-webp", url, width)
 		}
 		
-		// Skenario 2: Jika gambar lokal
+		// Scenario 2: If image is local
 		return fmt.Sprintf("/api/thumb?src=%s&w=%d", url, width)
 	})
 
-	// Inisialisasi Fiber App
+	// Initialize Fiber App
 	app := fiber.New(fiber.Config{
 		Views:       engine,
 		AppName:     "go-lightblog",
-		IdleTimeout: 10 * time.Second, // Optimasi ringan untuk manajemen koneksi
+		IdleTimeout: 10 * time.Second, // Light optimization for connection management
 	})
 
-	// Daftarkan middleware secara global di sini
+	// Register middleware globally here
 	app.Use(middleware.CheckSetup)
 
-	// Melayani file statis dari folder "public"
+	// Serve static files from "public" folder
 	app.Static("/public", "./public")
 
-	// Route sementara untuk memastikan server berjalan
+	// Temporary route to ensure server is running
 	app.Get("/setup", func(c *fiber.Ctx) error {
-		return c.Render("setup", fiber.Map{}) // Ubah nil menjadi fiber.Map{}
+		return c.Render("setup", fiber.Map{}) // Change nil to fiber.Map{}
 	})
 
-	// Rute Proses Setup (POST)
+	// Setup Process Route (POST)
 	app.Post("/setup/process", handlers.SetupProcess)
 
-	// Rute Login Dinamis
+	// Dynamic Login Route
 	app.Get("/login-:token", func(c *fiber.Ctx) error {
-		// Ambil token dari URL
+		// Get token from URL
 		urlToken := c.Params("token")
-		// Ambil token dari DB (fallback "admin" jika setup belum selesai)
+		// Get token from DB (fallback "admin" if setup not completed)
 		validToken := models.GetSetting(database.DB, "login_token", "admin")
 
-		// Jika token di URL tidak cocok dengan di DB, lemparkan 404
+		// If URL token doesn't match DB, throw 404
 		if urlToken != validToken {
 			return c.Status(fiber.StatusNotFound).SendString("404 Not Found")
 		}
@@ -97,50 +97,50 @@ func main() {
 			return c.Redirect("/dashboard")
 		}
 		
-		// Kirim token ke template agar form bisa menggunakan URL aksi yang benar
+		// Send token to template so form can use correct action URL
 		return c.Render("login", fiber.Map{
 			"LoginToken": urlToken,
 		})
 	})
 
-	// Proses Login (POST)
+	// Login Process (POST)
 	app.Post("/login-:token/process", handlers.ProcessLogin)
 
-	// Rute Halaman Utama (Homepage)
+	// Homepage Routes
 	app.Get("/", handlers.Home)
 	app.Get("/post/:slug", handlers.ReadPost)
-	app.Get("/page/:slug", handlers.ReadPost) // Untuk Halaman Statis (menggunakan handler yang sama)
-	// Rute Publik (Tambahkan di bawah rute GET lainnya)
+	app.Get("/page/:slug", handlers.ReadPost) // For Static Pages (using same handler)
+	// Public Routes (Add below other GET routes)
 	app.Get("/api/thumb", handlers.ImageThumbProxy)
-	// Rute Pencarian Publik
+	// Public Search Route
 	app.Get("/search", handlers.SearchPosts)
 
-	// Rute Arsip (Kategori, Tag, Author)
+	// Archive Routes (Category, Tag, Author)
 	app.Get("/category/:slug", handlers.CategoryPosts)
 	app.Get("/tag/:slug", handlers.TagPosts)
 	app.Get("/author/:id", handlers.AuthorPosts)
 
 	// ==========================================
-	// API MANAJEMEN CMS (KHUSUS ADMIN / EDITOR)
+	// CMS MANAGEMENT API (ADMIN / EDITOR ONLY)
 	// ==========================================
 	
-	// Semua rute di bawah /api/v1/admin wajib login
+	// All routes under /api/v1/admin require login
 	adminAPI := app.Group("/api/v1/admin", middleware.RequireAuth)
 
-	// 1. CRUD Pengguna (Hanya Admin)
+	// 1. User CRUD (Admin only)
 	users := adminAPI.Group("/users", middleware.RequireRole("admin"))
 	users.Get("/", handlers.ApiGetUsers)
 	users.Post("/", handlers.ApiCreateUser)
 	users.Put("/:id", handlers.ApiUpdateUser)
 	users.Delete("/:id", handlers.ApiDeleteUser)
 
-	// 2. Read/Write Settings (Hanya Admin)
+	// 2. Read/Write Settings (Admin only)
 	settings := adminAPI.Group("/settings", middleware.RequireRole("admin"))
 	settings.Get("/", handlers.ApiGetSettings)
-	settings.Put("/", handlers.ApiUpdateSettings) // Gunakan PUT/PATCH karena setting biasanya entitas tunggal
+	settings.Put("/", handlers.ApiUpdateSettings) // Use PUT/PATCH because setting is usually a single entity
 
-	// 3. CRUD Kategori & Tags (Admin & Editor)
-	// Editor bisa membuat tag/kategori baru untuk artikel mereka
+	// 3. Category & Tag CRUD (Admin & Editor)
+	// Editor can create new tags/categories for their articles
 	categories := adminAPI.Group("/categories", middleware.RequireRole("admin", "editor"))
 	categories.Get("/", handlers.ApiGetCategories)
 	categories.Post("/", handlers.ApiCreateCategory)
@@ -153,10 +153,10 @@ func main() {
 	tags.Put("/:id", handlers.ApiUpdateTag)
 	tags.Delete("/:id", handlers.ApiDeleteTag)
 
-	// // 4. CRUD Posts + Cover Upload + AI SEO (Admin & Editor)
+	// // 4. Post CRUD + Cover Upload + AI SEO (Admin & Editor)
 	posts := adminAPI.Group("/posts", middleware.RequireRole("admin", "editor"))
 	posts.Get("/", handlers.ApiGetPosts)
-	posts.Post("/", handlers.ApiCreatePost) // Di sini akan ditangani file upload (multipart/form-data) dan AI trigger
+	posts.Post("/", handlers.ApiCreatePost) // File upload (multipart/form-data) and AI trigger handled here
 	posts.Put("/:id", handlers.ApiUpdatePost)
 	posts.Delete("/:id", handlers.ApiDeletePost)
 
@@ -164,51 +164,51 @@ func main() {
 
 	adminGroup.Get("/dashboard", handlers.DashboardView)
 
-	// --- ROUTE POSTINGAN ---
-	adminGroup.Get("/posts", handlers.ListPosts)             // Tampilkan daftar
-	adminGroup.Get("/posts/create", handlers.CreatePostView) // Tampilkan form
-	adminGroup.Post("/posts/create", handlers.ProcessCreatePost) // Proses simpan
+	// --- POST ROUTES ---
+	adminGroup.Get("/posts", handlers.ListPosts)             // Show list
+	adminGroup.Get("/posts/create", handlers.CreatePostView) // Show form
+	adminGroup.Post("/posts/create", handlers.ProcessCreatePost) // Process save
 	adminGroup.Post("/seo/generate", handlers.GenerateSEO)
 
-	// Rute Edit & Delete baru
+	// New Edit & Delete routes
 	adminGroup.Get("/posts/edit/:id", handlers.EditPostView)
 	adminGroup.Post("/posts/edit/:id", handlers.ProcessEditPost)
 	adminGroup.Get("/posts/delete/:id", handlers.DeletePost)
 
-	// Manajemen Kategori
+	// Category Management
 	adminGroup.Get("/categories", handlers.CategoryList)
 	adminGroup.Post("/categories", handlers.CategoryCreate)
 	adminGroup.Post("/categories/delete/:id", handlers.CategoryDelete)
 
-	// Manajemen Tag
+	// Tag Management
 	adminGroup.Get("/tags", handlers.TagList)
 	adminGroup.Post("/tags", handlers.TagCreate)
 	adminGroup.Post("/tags/delete/:id", handlers.TagDelete)
 
-	// API Internal untuk Upload
+	// Internal API for Upload
 	adminGroup.Post("/api/upload", handlers.UploadImage)
 
-	// Proses Logout (GET/POST - untuk sekarang GET lebih praktis diujicoba)
+	// Logout Process (GET/POST - for now GET is more practical for testing)
     adminGroup.Post("/logout", handlers.ProcessLogout)
 
-	// === TAMBAHKAN GRUP SUPER ADMIN ===
-	// Rute Khusus Admin
+	// === ADD SUPER ADMIN GROUP ===
+	// Admin-only routes
 	superAdminGroup := app.Group("", middleware.RequireLogin, middleware.RequireAdmin)
 
-	// --- ROUTE PENGATURAN ---
+	// --- SETTINGS ROUTES ---
 	superAdminGroup.Get("/settings", handlers.SettingsView)
 	superAdminGroup.Post("/settings/update", handlers.ProcessUpdateSettings)
 	superAdminGroup.Post("/settings/password", handlers.ProcessUpdatePassword)
 	superAdminGroup.Post("/settings/integrations", handlers.ProcessUpdateIntegrations)
 
-	// Rute Manajemen Pengguna (Hanya Admin)
+	// User Management Routes (Admin only)
 	superAdminGroup.Get("/users", handlers.ListUsers)
 	superAdminGroup.Get("/users/create", handlers.CreateUserView)
 	superAdminGroup.Post("/users/create", handlers.CreateUserProcess)
 	superAdminGroup.Post("/users/delete/:id", handlers.DeleteUserProcess)
 
 
-	// Menyiapkan alamat dan menjalankan server
+	// Set up address and run server
 	addr := fmt.Sprintf("%s:%d", *listenAddr, *listenPort)
 	log.Printf("Starting go-lightblog on http://%s", addr)
 	

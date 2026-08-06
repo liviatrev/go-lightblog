@@ -9,7 +9,7 @@ import (
 )
 
 // ==========================================
-// KATEGORI
+// CATEGORY
 // ==========================================
 
 func CategoryList(c *fiber.Ctx) error {
@@ -18,8 +18,8 @@ func CategoryList(c *fiber.Ctx) error {
 
 	su := utils.GetSessionUser(c)
 	return c.Render("dashboard/categories", fiber.Map{
-		"Title":       "Kategori",
-		"HeaderTitle": "Manajemen Kategori",
+		"Title":       "Categories",
+		"HeaderTitle": "Manage Categories",
 		"ActiveMenu":  "categories",
 		"Categories":  categories,
 		"UserName":    su.UserName,
@@ -53,8 +53,8 @@ func TagList(c *fiber.Ctx) error {
 
 	su := utils.GetSessionUser(c)
 	return c.Render("dashboard/tags", fiber.Map{
-		"Title":       "Tag",
-		"HeaderTitle": "Manajemen Tag",
+		"Title":       "Tags",
+		"HeaderTitle": "Manage Tags",
 		"ActiveMenu":  "tags",
 		"Tags":        tags,
 		"UserName":    su.UserName,

@@ -1,15 +1,15 @@
 <div class="container py-4">
-    <!-- Header Pencarian -->
+    <!-- Search Header -->
     <div class="mb-4 pb-2 border-bottom">
-        <h1 class="h3 fw-bold">Hasil Pencarian</h1>
+        <h1 class="h3 fw-bold">Search Results</h1>
         {{if .Query}}
-            <p class="text-muted">Menampilkan hasil untuk kata kunci: <span class="badge bg-primary fs-6">{{.Query}}</span> (Ditemukan {{.TotalPosts}} artikel)</p>
+            <p class="text-muted">Showing results for keyword: <span class="badge bg-primary fs-6">{{.Query}}</span> (Found {{.TotalPosts}} articles)</p>
         {{else}}
-            <p class="text-muted">Silakan masukkan kata kunci pencarian pada kolom di atas.</p>
+            <p class="text-muted">Please enter a search keyword in the field above.</p>
         {{end}}
     </div>
 
-    <!-- Daftar Hasil -->
+    <!-- Results List -->
     <div class="row">
         {{if .Posts}}
             {{range .Posts}}
@@ -20,7 +20,7 @@
                     {{end}}
                     <div class="card-body">
                         <div class="mb-2">
-                            <span class="badge bg-secondary">{{if .Category}}{{.Category.Name}}{{else}}Umum{{end}}</span>
+                            <span class="badge bg-secondary">{{if .Category}}{{.Category.Name}}{{else}}General{{end}}</span>
                         </div>
                         <h2 class="h5 card-title fw-bold">
                             <a href="/post/{{.Slug}}" class="text-decoration-none text-dark">{{.Title}}</a>
@@ -33,25 +33,22 @@
         {{else}}
             {{if .Query}}
             <div class="col-12 text-center py-5">
-                <p class="fs-5 text-muted">Maaf, tidak ada artikel yang cocok dengan kata kunci <strong>"{{.Query}}"</strong>.</p>
-                <a href="/" class="btn btn-outline-primary btn-sm mt-2">Kembali ke Beranda</a>
+                <p class="fs-5 text-muted">Sorry, no articles match the keyword <strong>"{{.Query}}"</strong>.</p>
+                <a href="/" class="btn btn-outline-primary btn-sm mt-2">Back to Home</a>
             </div>
             {{end}}
         {{end}}
     </div>
 
-    <!-- Pagination Pencarian -->
+    <!-- Pagination (Icons Only) -->
     {{if gt .TotalPages 1}}
-    <nav aria-label="Navigasi Pencarian" class="mt-4">
+    <nav aria-label="Search pagination" class="mt-4">
         <ul class="pagination justify-content-center">
             <li class="page-item {{if not .HasPrev}}disabled{{end}}">
-                <a class="page-link" href="{{if .HasPrev}}/search?q={{$.Query}}&page={{.PrevPage}}{{else}}#{{end}}">&laquo; Sebelumnya</a>
-            </li>
-            <li class="page-item disabled d-none d-md-block">
-                <span class="page-link">Halaman {{.CurrentPage}} dari {{.TotalPages}}</span>
+                <a class="page-link" href="{{if .HasPrev}}/search?q={{$.Query}}&page={{.PrevPage}}{{else}}#{{end}}">&laquo;</a>
             </li>
             <li class="page-item {{if not .HasNext}}disabled{{end}}">
-                <a class="page-link" href="{{if .HasNext}}/search?q={{$.Query}}&page={{.NextPage}}{{else}}#{{end}}">Selanjutnya &raquo;</a>
+                <a class="page-link" href="{{if .HasNext}}/search?q={{$.Query}}&page={{.NextPage}}{{else}}#{{end}}">&raquo;</a>
             </li>
         </ul>
     </nav>

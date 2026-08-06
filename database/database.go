@@ -10,19 +10,19 @@ import (
 	"gorm.io/gorm/logger"
 )
 
-// DB adalah instance global agar bisa dipanggil dari handlers/services
+// DB is a global instance so it can be called from handlers/services
 var DB *gorm.DB
 
 func Connect(dbPath string) {
-	// Menggunakan glebarez/sqlite pure Go
+	// Using glebarez/sqlite pure Go
 	db, err := gorm.Open(sqlite.Open(dbPath), &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Silent), // Silent agar terminal rapi, bisa diganti ke Info jika ingin melihat raw SQL
+		Logger: logger.Default.LogMode(logger.Silent), // Silent to keep terminal clean, can change to Info to see raw SQL
 	})
 	if err != nil {
-		log.Fatalf("Gagal terkoneksi ke database SQLite: %v", err)
+		log.Fatalf("Failed to connect to SQLite database: %v", err)
 	}
 
-	// Menjalankan migrasi otomatis untuk struktur tabel
+	// Run automatic migration for table structure
 	err = db.AutoMigrate(
 		&models.User{}, 
 		&models.Setting{}, 
@@ -31,14 +31,14 @@ func Connect(dbPath string) {
 		&models.Post{},
 	)
 	if err != nil {
-		log.Fatalf("Gagal melakukan migrasi database: %v", err)
+		log.Fatalf("Failed to migrate database: %v", err)
 	}
 
 	// ==========================================
-	// SEEDER PENGATURAN DEFAULT CMS
+	// DEFAULT CMS SETTINGS SEEDER
 	// ==========================================
 	defaultSettings := []models.Setting{
-		{Key: "site_description", Value: "Blog minimalis dan cepat bertenaga Go Fiber."},
+		{Key: "site_description", Value: "A minimal and fast blog powered by Go Fiber."},
 		{Key: "site_keywords", Value: "blog, go, fiber, lightblog"},
 		{Key: "upload_mode", Value: "local"},
 		{Key: "imagekit_private_key", Value: ""},
@@ -50,26 +50,26 @@ func Connect(dbPath string) {
 		{Key: "gemini_model", Value: "gemini-flash-latest"},
 	}
 
-	// Looping untuk memastikan setiap konfigurasi dasar memiliki baris di database
+	// Loop to ensure every basic configuration has a row in the database
 	for _, setting := range defaultSettings {
-		// FirstOrCreate akan mencari data berdasarkan Key. 
-		// Jika tidak ada, ia akan melakukan INSERT. Jika sudah ada, ia akan diam (mengabaikan).
-		// Ini memastikan pengaturan yang sudah diubah oleh admin tidak tertimpa ulang saat server restart.
+		// FirstOrCreate will search data by Key. 
+		// If not found, it will INSERT. If found, it will stay silent (ignore).
+		// This ensures settings already changed by admin are not overwritten on server restart.
 		db.FirstOrCreate(&setting, models.Setting{Key: setting.Key})
 	}
 	// ==========================================
 
-	// Mengecek apakah sudah ada data admin di tabel User
+	// Check if there is already admin data in User table
 	var userCount int64
 	db.Model(&models.User{}).Count(&userCount)
 	if userCount > 0 {
 		config.AppSetupCompleted = true
-		log.Println("Status CMS: Setup sudah selesai.")
+		log.Println("CMS Status: Setup completed.")
 	} else {
 		config.AppSetupCompleted = false
-		log.Println("Status CMS: Membutuhkan inisialisasi awal (Setup Mode).")
+		log.Println("CMS Status: Requires initial setup (Setup Mode).")
 	}
 
-	log.Println("Database SQLite berhasil terhubung dan dimigrasi.")
+	log.Println("SQLite database connected and migrated successfully.")
 	DB = db
 }

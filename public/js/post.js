@@ -16,7 +16,7 @@
         max_shown_comments: 15,
         theme: 'light',
         page_title: remarkEl.dataset.pageTitle,
-        locale: 'id'
+        locale: 'en'
     };
 
     window.remark_config = remarkConfig;

@@ -16,8 +16,8 @@ func ListUsers(c *fiber.Ctx) error {
 	su := utils.GetSessionUser(c)
 
 	return c.Render("dashboard/users_list", fiber.Map{
-		"Title":       "Manajemen Pengguna",
-		"HeaderTitle": "Daftar Pengguna",
+		"Title":       "User Management",
+		"HeaderTitle": "User List",
 		"ActiveMenu":  "users",
 		"Users":       users,
 		"UserName":    su.UserName,
@@ -29,8 +29,8 @@ func CreateUserView(c *fiber.Ctx) error {
 	su := utils.GetSessionUser(c)
 
 	return c.Render("dashboard/user_form", fiber.Map{
-		"Title":       "Tambah Pengguna",
-		"HeaderTitle": "Tambah Editor Baru",
+		"Title":       "Add User",
+		"HeaderTitle": "Add New Editor",
 		"ActiveMenu":  "users",
 		"UserName":    su.UserName,
 		"UserRole":    su.UserRole,
@@ -45,7 +45,7 @@ func CreateUserProcess(c *fiber.Ctx) error {
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
-		return c.Status(500).SendString("Kesalahan Server Internal (Bcrypt)")
+		return c.Status(500).SendString("Internal Server Error (Bcrypt)")
 	}
 
 	user := models.User{

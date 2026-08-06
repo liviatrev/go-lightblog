@@ -4,9 +4,9 @@ document.addEventListener('click', function (e) {
 
     var key = btn.dataset.copyApiKey;
     navigator.clipboard.writeText(key).then(function () {
-        alert('API Key berhasil disalin ke clipboard!');
+        alert('API Key copied to clipboard!');
     }).catch(function (err) {
-        alert('Gagal menyalin API Key.');
+        alert('Failed to copy API Key.');
         console.error(err);
     });
 });
