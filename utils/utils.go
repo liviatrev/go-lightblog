@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"image"
+	"image/draw"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -416,11 +417,20 @@ func saveImageFile(img image.Image, path, format string) error {
 	var encodeErr error
 	switch format {
 	case "webp":
-		// Lossy WebP with quality 70 matches the JPEG quality setting,
-		// producing much smaller thumbnails than lossless encoding.
-		encodeErr = webp.Encode(out, img, &webp.EncoderOptions{
+		// Flatten alpha onto a white background before lossy WebP encoding.
+		// WebP lossy stores any alpha channel in a separate lossless ALPH
+		// plane, which can balloon file size for images with transparency
+		// (e.g. PNGs). Thumbnails are always displayed on a light/white
+		// page background, so flattening is visually lossless here.
+		opaqueImg := flattenToWhite(img)
+		encodeErr = webp.Encode(out, opaqueImg, &webp.EncoderOptions{
 			Quality: 70,
-			Method:  4, // balanced speed/compression
+			// Higher method at these sizes is negligible time-wise and yields
+			// visibly smaller files than the default.
+			Method: 6, // best compression
+			// Photo preset tunes the encoder for photographic content,
+			// which is what blog cover images are.
+			Preset: webp.PresetPhoto,
 		})
 	default:
 		encodeErr = imaging.Encode(out, img, imaging.JPEG, imaging.JPEGQuality(70))
@@ -439,6 +449,26 @@ func saveImageFile(img image.Image, path, format string) error {
 	// Ensure thumbnail is readable by other processes (e.g. reverse proxy)
 	os.Chmod(path, 0644)
 	return nil
+}
+
+// flattenToWhite composites img onto an opaque white background,
+// removing any alpha transparency. This is essential for WebP lossy
+// encoding: any alpha in the source would otherwise force the encoder
+// to emit a separate lossless ALPH plane, making the file much larger
+// than the equivalent JPEG.
+func flattenToWhite(img image.Image) *image.NRGBA {
+	b := img.Bounds()
+	dst := image.NewNRGBA(image.Rect(0, 0, b.Dx(), b.Dy()))
+
+	// Pre-fill with opaque white (R=G=B=A=255)
+	white := make([]byte, dst.Stride*dst.Rect.Dy())
+	for i := range white {
+		white[i] = 255
+	}
+	dst.Pix = white
+
+	draw.Draw(dst, dst.Bounds(), img, b.Min, draw.Over)
+	return dst
 }
 
 // ============================================================

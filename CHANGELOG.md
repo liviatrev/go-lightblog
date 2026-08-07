@@ -45,6 +45,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `ResizeAndCacheThumbnail` now saves the JPG variant first and treats WebP
   generation as best-effort, so a WebP failure never prevents thumbnails
   from being generated.
+- WebP encoding now flattens alpha transparency onto a white background
+  before lossy encoding. WebP lossy stores any alpha in a separate lossless
+  ALPH plane, which ballooned file sizes for PNG uploads (e.g. 1.9MB WebP
+  vs 89KB JPG). Flattening makes WebP thumbnails comparable to or smaller
+  than JPG.
+- WebP encoding now uses `PresetPhoto` for photographic content, producing
+  better compression for blog cover images.
 
 ## [0.0.0] - Initial release
 
