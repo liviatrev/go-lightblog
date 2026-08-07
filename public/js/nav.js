@@ -22,7 +22,8 @@
     }
 
     // --- Close collapse when clicking a nav link (mobile UX) ---
-    var navLinks = document.querySelectorAll('.navbar-collapse .nav-link, .navbar-collapse .dropdown-item');
+    // Exclude .dropdown-toggle so clicking a dropdown doesn't close the hamburger menu
+    var navLinks = document.querySelectorAll('.navbar-collapse .nav-link:not(.dropdown-toggle), .navbar-collapse .dropdown-item');
     navLinks.forEach(function (link) {
         link.addEventListener('click', function () {
             var collapseEl = document.querySelector('.navbar-collapse.show');
