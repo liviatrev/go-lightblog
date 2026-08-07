@@ -3,7 +3,7 @@ module go-lightblog
 go 1.25.0
 
 require (
-	github.com/HugoSmits86/nativewebp v1.3.0
+	github.com/deepteams/webp v1.2.7
 	github.com/disintegration/imaging v1.6.2
 	github.com/glebarez/sqlite v1.11.0
 	github.com/gofiber/fiber/v2 v2.52.14

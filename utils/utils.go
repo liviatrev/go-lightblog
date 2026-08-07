@@ -18,7 +18,7 @@ import (
 	"go-lightblog/database"
 	"go-lightblog/models"
 
-	"github.com/HugoSmits86/nativewebp"
+	"github.com/deepteams/webp"
 	"github.com/disintegration/imaging"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/session"
@@ -159,6 +159,19 @@ func GetSiteTitle() string {
 		return "go-lightblog"
 	}
 	return setting.Value
+}
+
+// RenderNotFound renders a custom 404 page using the public layout.
+// It is used both for unmatched routes and for protected admin
+// routes accessed without authentication (to avoid leaking the
+// hidden login URL).
+func RenderNotFound(c *fiber.Ctx) error {
+	data := GetNavbarData()
+	data["SiteTitle"] = "404 Not Found - " + GetSiteTitle()
+	data["SiteDescription"] = "The page you are looking for doesn't exist or has been moved."
+	data["SiteKeywords"] = "404, not found"
+
+	return c.Status(fiber.StatusNotFound).Render("404", data, "layouts/public")
 }
 
 // GetNavbarData gets Category and Static Page data for navigation menu
@@ -358,47 +371,71 @@ func ResizeAndCacheThumbnail(src string, w int, format string) (string, error) {
 	// 4. Resize with Lanczos algorithm
 	resizedImg := imaging.Resize(img, w, 0, imaging.Lanczos)
 
-	// 5. Ensure both JPG and WebP variants exist
-	// (atomic temp-file + rename avoids corruption from concurrent requests)
+	// 5. Generate JPG variant FIRST (it always succeeds for raster sources)
+	//    so a WebP failure never prevents the JPEG fallback from existing.
 	if _, err := os.Stat(jpgPath); err != nil {
 		if err := saveImageFile(resizedImg, jpgPath, "jpg"); err != nil {
-			return "", fmt.Errorf("failed to save thumbnail")
+			return "", fmt.Errorf("failed to save thumbnail (jpg): %v", err)
 		}
 	}
+
+	// 6. Generate WebP variant NEXT (best-effort).
+	//    If WebP encoding fails for any reason, we still return the JPG
+	//    so the `<picture>` element falls back gracefully.
 	if _, err := os.Stat(webpPath); err != nil {
 		if err := saveImageFile(resizedImg, webpPath, "webp"); err != nil {
-			return "", fmt.Errorf("failed to save thumbnail")
+			// Log but continue – the JPG fallback is already saved.
+			os.Remove(webpPath)
+		}
+	}
+
+	// If we were asked for WebP but it failed, serve the JPG instead.
+	if format == "webp" {
+		if _, err := os.Stat(webpPath); err != nil {
+			thumbPath = jpgPath
 		}
 	}
 
 	return thumbPath, nil
 }
 
-// saveImageFile encodes img into path (jpg or webp) atomically using a
-// temp file + rename so a crash never leaves a half-written thumbnail.
+// saveImageFile encodes img into path (jpg or webp). Writes directly to the
+// destination file and surfaces the underlying encoder error so failures
+// are not silently masked.
 func saveImageFile(img image.Image, path, format string) error {
-	tmp, err := os.CreateTemp(filepath.Dir(path), "thumb-*.tmp")
+	// Ensure the parent directory exists
+	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+		return err
+	}
+
+	out, err := os.Create(path)
 	if err != nil {
 		return err
 	}
-	tmpName := tmp.Name()
 
 	var encodeErr error
 	switch format {
 	case "webp":
-		encodeErr = nativewebp.Encode(tmp, img, &nativewebp.Options{})
+		// Lossy WebP with quality 70 matches the JPEG quality setting,
+		// producing much smaller thumbnails than lossless encoding.
+		encodeErr = webp.Encode(out, img, &webp.EncoderOptions{
+			Quality: 70,
+			Method:  4, // balanced speed/compression
+		})
 	default:
-		encodeErr = imaging.Encode(tmp, img, imaging.JPEG, imaging.JPEGQuality(70))
+		encodeErr = imaging.Encode(out, img, imaging.JPEG, imaging.JPEGQuality(70))
 	}
-	closeErr := tmp.Close()
-	if encodeErr != nil || closeErr != nil {
-		os.Remove(tmpName)
-		return fmt.Errorf("encode failed")
+
+	closeErr := out.Close()
+	if encodeErr != nil {
+		os.Remove(path)
+		return fmt.Errorf("%s encode: %v", format, encodeErr)
 	}
-	if err := os.Rename(tmpName, path); err != nil {
-		os.Remove(tmpName)
-		return err
+	if closeErr != nil {
+		os.Remove(path)
+		return fmt.Errorf("close %s file: %v", format, closeErr)
 	}
+
 	// Ensure thumbnail is readable by other processes (e.g. reverse proxy)
 	os.Chmod(path, 0644)
 	return nil

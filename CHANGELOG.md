@@ -27,13 +27,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `config.PublicPath` global.
 - **ImageKit CDN URLs**: the `thumb` helper now emits explicit `f-jpg` and
   `f-webp` ImageKit transformations for the respective fallback variants.
-- **New dependency**: `github.com/HugoSmits86/nativewebp` (pure-Go WebP
-  encoder, no cgo/libwebp required) added for local WebP generation.
+- **New dependency**: `github.com/deepteams/webp` (pure-Go WebP encoder,
+  zero CGO, zero dependencies) added for local WebP generation. Supports
+  **lossy** VP8 encoding with quality control, producing much smaller
+  thumbnails than lossless-only encoders.
 
 ### Fixed
 
 - Removed the unused `path/filepath` import in `utils/cachebuster.go` that
   broke compilation of the `utils` package.
+- Replaced `github.com/HugoSmits86/nativewebp` (lossless-only) with
+  `github.com/deepteams/webp` (lossy + lossless) for much smaller WebP
+  thumbnails.
+- `saveImageFile` now writes directly to the destination file instead of
+  using temp-file + rename, fixing thumbnail generation failures on WSL /
+  mounted filesystems.
+- `ResizeAndCacheThumbnail` now saves the JPG variant first and treats WebP
+  generation as best-effort, so a WebP failure never prevents thumbnails
+  from being generated.
 
 ## [0.0.0] - Initial release
 

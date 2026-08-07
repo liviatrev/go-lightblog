@@ -23,18 +23,18 @@
 
     (function (e, n) {
         for (var o = 0; o < e.length; o++) {
-            var r = n.createElement('script'),
+            var s = n.createElement('script'),
                 c = '.js',
                 d = n.head || n.body;
-            if ('noModule' in r) {
-                r.type = 'module';
+            if ('noModule' in s) {
+                s.type = 'module';
                 c = '.mjs';
             } else {
-                r.async = true;
+                s.async = true;
             }
-            r.defer = true;
-            r.src = remarkConfig.host + '/web/' + e[o] + c;
-            d.appendChild(r);
+            s.defer = true;
+            s.src = window.remark_config.host + '/web/' + e[o] + c;
+            d.appendChild(s);
         }
     })(remarkConfig.components || ['embed'], document);
 })();

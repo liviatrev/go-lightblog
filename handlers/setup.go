@@ -27,7 +27,8 @@ func SetupProcess(c *fiber.Ctx) error {
 	var count int64
 	database.DB.Model(&models.User{}).Count(&count)
 	if count > 0 {
-		return c.Redirect("/login")
+		loginToken := models.GetSetting(database.DB, "login_token", "admin")
+		return c.Redirect("/login-" + loginToken)
 	}
 
 	username := c.FormValue("username")

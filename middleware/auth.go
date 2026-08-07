@@ -6,23 +6,25 @@ import (
 	"go-lightblog/config"
 	"go-lightblog/database"
 	"go-lightblog/models"
+	"go-lightblog/utils"
 
 	"github.com/gofiber/fiber/v2"
 )
 
-// RequireLogin is middleware to protect routes that need authentication
+// RequireLogin is middleware to protect routes that need authentication.
+// Unauthenticated users are served a 404 page instead of being redirected
+// to the hidden login URL, so the login token is never leaked.
 func RequireLogin(c *fiber.Ctx) error {
 	sess, err := config.SessStore.Get(c)
-	loginToken := models.GetSetting(database.DB, "login_token", "admin")
 	if err != nil {
 		// If error reading session, consider unauthenticated
-		return c.Redirect("/login-" + loginToken)
+		return utils.RenderNotFound(c)
 	}
 
 	// Check if "is_logged_in" key exists in session
 	if sess.Get("is_logged_in") == nil {
 		// Session not found or expired
-		return c.Redirect("/login-" + loginToken)
+		return utils.RenderNotFound(c)
 	}
 
 	// Session valid, continue to destination handler
@@ -32,9 +34,8 @@ func RequireLogin(c *fiber.Ctx) error {
 func RequireAdmin(c *fiber.Ctx) error {
 	// Call config.SessStore according to your structure
 	sess, err := config.SessStore.Get(c)
-	loginToken := models.GetSetting(database.DB, "login_token", "admin")
 	if err != nil {
-		return c.Redirect("/login-" + loginToken)
+		return utils.RenderNotFound(c)
 	}
 
 	// Make sure role is admin

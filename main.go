@@ -1,11 +1,14 @@
 package main
 
 import (
+	"embed"
 	"flag"
 	"fmt"
 	"html/template"
+	"io/fs"
 	"log"
 	"net"
+	"net/http"
 	"os"
 	"strings"
 	"time"
@@ -20,6 +23,11 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/template/html/v2"
 )
+
+//go:embed views/*
+//go:embed views/dashboard/*
+//go:embed views/layouts/*
+var viewsFS embed.FS
 
 // ThumbURLs holds both variants produced by the "thumb" template function,
 // letting templates prioritize WebP with a JPG fallback.
@@ -48,7 +56,11 @@ func main() {
 
 	// Initialize Fiber HTML Template Engine
 	// Points to "views" folder with ".html" extension
-	engine := html.New("./views", ".html")
+	subFS, err := fs.Sub(viewsFS, "views")
+	if err != nil {
+		log.Fatalf("Failed to create sub filesystem for views: %v", err)
+	}
+	engine := html.NewFileSystem(http.FS(subFS), ".html")
 
 	// Add custom function so HTML can be rendered
 	engine.AddFunc("unescape", func(s string) template.HTML {
@@ -237,6 +249,10 @@ func main() {
 	superAdminGroup.Post("/users/create", handlers.CreateUserProcess)
 	superAdminGroup.Post("/users/delete/:id", handlers.DeleteUserProcess)
 
+	// ==========================================
+	// CUSTOM 404 HANDLER (must be registered last)
+	// ==========================================
+	app.Use(handlers.NotFound)
 
 	// ==========================================
 	// SERVER LISTENER LOGIC
