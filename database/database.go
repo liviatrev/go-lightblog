@@ -54,6 +54,8 @@ func Connect(dbPath string) {
 	defaultSettings := []models.Setting{
 		{Key: "site_description", Value: "A minimal and fast blog powered by Go Fiber."},
 		{Key: "site_keywords", Value: "blog, go, fiber, lightblog"},
+		{Key: "site_headline", Value: "Explore Articles"},
+		{Key: "site_tagline", Value: "A collection of the latest writings, notes, and insights."},
 		{Key: "upload_mode", Value: "local"},
 		{Key: "imagekit_private_key", Value: ""},
 		{Key: "imagekit_folder", Value: "/lightblog"},

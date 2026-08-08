@@ -3,8 +3,8 @@
     <!-- Page Header -->
     <div class="row mb-5 text-center">
         <div class="col-lg-8 mx-auto">
-            <h1 class="fw-bold text-dark">Explore Articles</h1>
-            <p class="lead text-muted">A collection of the latest writings, notes, and insights.</p>
+            <h1 class="fw-bold text-dark">{{.SiteHeadline}}</h1>
+            <p class="lead text-muted">{{.SiteTagline}}</p>
         </div>
     </div>
 
@@ -16,7 +16,7 @@
                 
                 <!-- Cover Image -->
                 {{if .CoverImage}}
-                    {{$cover := thumb .CoverImage 600}}
+                    {{$cover := thumb .CoverImage 300}}
                     <picture>
                         <source srcset="{{$cover.WebP}}" type="image/webp">
                         <img src="{{$cover.JPG}}" class="card-img-top card-img-cover" alt="{{.Title}}">

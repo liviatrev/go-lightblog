@@ -26,6 +26,8 @@ func SettingsView(c *fiber.Ctx) error {
 	geminiModel := models.GetSetting(database.DB, "gemini_model", "gemini-flash-latest")
 	siteDesc := models.GetSetting(database.DB, "site_description", "A minimal and fast blog powered by Go Fiber.")
 	siteKeywords := models.GetSetting(database.DB, "site_keywords", "blog, go, fiber, lightblog")
+	siteHeadline := models.GetSetting(database.DB, "site_headline", "Explore Articles")
+	siteTagline := models.GetSetting(database.DB, "site_tagline", "A collection of the latest writings, notes, and insights.")
 	loginToken := models.GetSetting(database.DB, "login_token", "admin")
 
 	return c.Render("dashboard/settings", fiber.Map{
@@ -45,6 +47,8 @@ func SettingsView(c *fiber.Ctx) error {
 		"GeminiModel":     geminiModel,
 		"SiteDesc":        siteDesc,
 		"SiteKeywords":    siteKeywords,
+		"SiteHeadline":	   siteHeadline,
+		"SiteTagline":	   siteTagline,
 		"EnableGemini":    enableGemini,
 		"LoginToken":      loginToken,
 	}, "layouts/main")
@@ -57,7 +61,7 @@ func ProcessUpdateSettings(c *fiber.Ctx) error {
 		return c.Redirect("/settings?msg=error_empty")
 	}
 
-	keys := []string{"site_title", "site_description", "site_keywords"}
+	keys := []string{"site_title", "site_description", "site_keywords", "site_headline", "site_tagline"}
 	for _, key := range keys {
 		database.DB.Save(&models.Setting{
 			Key:   key,

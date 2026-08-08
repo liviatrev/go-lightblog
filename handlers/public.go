@@ -36,12 +36,16 @@ func Home(c *fiber.Ctx) error {
 
 	siteDesc := models.GetSetting(database.DB, "site_description", "A minimal and fast blog powered by Go Fiber.")
 	siteKeywords := models.GetSetting(database.DB, "site_keywords", "blog, go, fiber, lightblog")
+	siteHeadline := models.GetSetting(database.DB, "site_headline", "Explore Articles")
+	siteTagline := models.GetSetting(database.DB, "site_tagline", "A collection of the latest writings, notes, and insights.")
 
 	data := utils.GetNavbarData()
 
 	data["SiteTitle"] = siteTitle
 	data["SiteDescription"] = siteDesc
 	data["SiteKeywords"] = siteKeywords
+	data["SiteHeadline"] = siteHeadline
+	data["SiteTagline"] = siteTagline
 	data["Posts"] = posts
 	data["CurrentPage"] = page
 	data["TotalPages"] = totalPages
@@ -73,21 +77,12 @@ func ReadPost(c *fiber.Ctx) error {
 	baseURL := c.BaseURL()
 	metaImageURL := post.CoverImage
 	if metaImageURL != "" && !strings.HasPrefix(metaImageURL, "http") {
-		metaImageURL = baseURL + metaImageURL // Combine: https://yourdomain.com + /public/uploads/image.jpg
+		metaImageURL = baseURL + metaImageURL
 	}
-
-	// return c.Render("post", fiber.Map{
-	// 	"SiteTitle": siteTitle,
-	// 	"SiteDescription": siteDesc,
-	// 	"Post":      post,
-	// 	"MetaImageURL":    metaImageURL,
-	// 	"Remark42URL":    remark42URL,
-	// 	"Remark42SiteID": remark42SiteID,
-	// }, "layouts/public")
 
 	data := utils.GetNavbarData()
 
-	data["SiteTitle"] = post.Title + " - " + utils.GetSiteTitle()
+	data["SiteTitle"] = utils.GetSiteTitle()
 	data["SiteDescription"] = post.MetaDescription
 	data["SiteKeywords"] = post.TargetKeyword
 	data["Post"] = post
@@ -131,7 +126,7 @@ func SearchPosts(c *fiber.Ctx) error {
 	totalPages := int(math.Ceil(float64(totalPosts) / float64(limit)))
 
 	data := utils.GetNavbarData()
-	data["SiteTitle"] = "Search: " + query + " - " + utils.GetSiteTitle()
+	data["SiteTitle"] = utils.GetSiteTitle()
 	data["Query"] = query
 	data["Posts"] = posts
 	data["TotalPosts"] = totalPosts
@@ -170,7 +165,7 @@ func CategoryPosts(c *fiber.Ctx) error {
 	totalPages := int(math.Ceil(float64(total) / float64(limit)))
 
 	data := utils.GetNavbarData()
-	data["SiteTitle"] = "Category: " + category.Name + " - " + utils.GetSiteTitle()
+	data["SiteTitle"] = utils.GetSiteTitle()
 	data["ArchiveTitle"] = "Category: " + category.Name
 	data["Posts"] = posts
 	data["CurrentPage"] = page
@@ -212,7 +207,7 @@ func TagPosts(c *fiber.Ctx) error {
 	totalPages := int(math.Ceil(float64(total) / float64(limit)))
 
 	data := utils.GetNavbarData()
-	data["SiteTitle"] = "Tag: " + tag.Name + " - " + utils.GetSiteTitle()
+	data["SiteTitle"] = utils.GetSiteTitle()
 	data["ArchiveTitle"] = "Tag: #" + tag.Name
 	data["Posts"] = posts
 	data["CurrentPage"] = page
@@ -250,7 +245,7 @@ func AuthorPosts(c *fiber.Ctx) error {
 	totalPages := int(math.Ceil(float64(total) / float64(limit)))
 
 	data := utils.GetNavbarData()
-	data["SiteTitle"] = "Author: " + author.Name + " - " + utils.GetSiteTitle()
+	data["SiteTitle"] = utils.GetSiteTitle()
 	data["ArchiveTitle"] = "Author: " + author.Name
 	data["Posts"] = posts
 	data["CurrentPage"] = page

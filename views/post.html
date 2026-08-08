@@ -25,7 +25,7 @@
 
     <!-- Cover Image -->
     {{if .Post.CoverImage}}
-        {{$cover := thumb .Post.CoverImage 1200}}
+        {{$cover := thumb .Post.CoverImage 800}}
         <picture>
             <source srcset="{{$cover.WebP}}" type="image/webp">
             <img src="{{$cover.JPG}}" class="img-fluid rounded mb-5 shadow-sm w-100 post-cover" alt="{{.Post.Title}}">
