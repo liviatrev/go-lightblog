@@ -56,7 +56,8 @@ func CreatePostView(c *fiber.Ctx) error {
 
 	return c.Render("dashboard/posts_create", fiber.Map{
 		"Title":        "Write New Post",
-		"HeaderTitle":  "Write Article",
+		"HeaderTitle":  "Write New Article",
+		"HeaderPostForm": "Write Article",
 		"ActiveMenu":   "posts",
 		"Categories":   categories,
 		"Tags":         tags,
@@ -145,7 +146,8 @@ func EditPostView(c *fiber.Ctx) error {
 
 	return c.Render("dashboard/posts_edit", fiber.Map{
 		"Title":           "Edit Post",
-		"HeaderTitle":     "Edit: " + post.Title,
+		"HeaderTitle":	   "Edit Article",
+		"HeaderPostForm":  "Edit: " + post.Title,
 		"ActiveMenu":      "posts",
 		"Post":            post,
 		"Categories":      categories,

@@ -31,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   zero CGO, zero dependencies) added for local WebP generation. Supports
   **lossy** VP8 encoding with quality control, producing much smaller
   thumbnails than lossless-only encoders.
+- **WYSIWYG Editor**: change editor from Quill JS to SunEditor.
 
 ### Fixed
 
