@@ -64,6 +64,11 @@ func Connect(dbPath string) {
 		{Key: "enable_gemini", Value: "no"},
 		{Key: "gemini_api_key", Value: ""},
 		{Key: "gemini_model", Value: "gemini-flash-latest"},
+		{Key: "enable_cloudflare", Value: "no"},
+		{Key: "cloudflare_api_key", Value: ""},
+		{Key: "cloudflare_zone_id", Value: ""},
+		{Key: "site_url", Value: ""},
+		{Key: "public_theme", Value: "light"},
 	}
 
 	// Loop to ensure every basic configuration has a row in the database

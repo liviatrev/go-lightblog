@@ -123,6 +123,13 @@ func ApiCreatePost(c *fiber.Ctx) error {
 		}).
 		First(&post, post.ID)
 
+	// Purge Cloudflare cache for this post, its category, tags, and homepage.
+	go func() {
+		if err := utils.PurgePostCache(post.ID); err != nil {
+			utils.LogCloudflareError("API create post", err)
+		}
+	}()
+
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
 		"success": true,
 		"message": "Article published successfully!",
@@ -213,6 +220,13 @@ func ApiUpdatePost(c *fiber.Ctx) error {
 			return db.Select("id, username, name, role")
 		}).
 		First(&post, post.ID)
+
+	// Purge Cloudflare cache for this post, its category, tags, and homepage.
+	go func() {
+		if err := utils.PurgePostCache(post.ID); err != nil {
+			utils.LogCloudflareError("API edit post", err)
+		}
+	}()
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"success": true,

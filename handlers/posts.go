@@ -116,6 +116,14 @@ func ProcessCreatePost(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).SendString("Failed to save post")
 	}
 
+	// Purge Cloudflare cache for this post, its category, tags, and homepage.
+	// Non-blocking: wraps in goroutine so response time isn't affected by the purge.
+	go func() {
+		if err := utils.PurgePostCache(post.ID); err != nil {
+			utils.LogCloudflareError("create post", err)
+		}
+	}()
+
 	return c.Redirect("/posts")
 }
 
@@ -205,6 +213,13 @@ func ProcessEditPost(c *fiber.Ctx) error {
 	}
 
 	database.DB.Model(&post).Association("Tags").Replace(selectedTags)
+
+	// Purge Cloudflare cache for this post, its category, tags, and homepage.
+	go func() {
+		if err := utils.PurgePostCache(post.ID); err != nil {
+			utils.LogCloudflareError("edit post", err)
+		}
+	}()
 
 	return c.Redirect("/posts")
 }

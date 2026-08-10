@@ -65,6 +65,13 @@ func ApiCreateCategory(c *fiber.Ctx) error {
 		})
 	}
 
+	// Purge Cloudflare cache for this category and homepage.
+	go func() {
+		if err := utils.PurgeTaxonomyCache(category.Slug, "category"); err != nil {
+			utils.LogCloudflareError("API create category", err)
+		}
+	}()
+
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
 		"success": true,
 		"message": "Category created successfully",
@@ -107,6 +114,13 @@ func ApiUpdateCategory(c *fiber.Ctx) error {
 			"message": "Failed to update category",
 		})
 	}
+
+	// Purge Cloudflare cache for this category and homepage.
+	go func() {
+		if err := utils.PurgeTaxonomyCache(category.Slug, "category"); err != nil {
+			utils.LogCloudflareError("API edit category", err)
+		}
+	}()
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"success": true,

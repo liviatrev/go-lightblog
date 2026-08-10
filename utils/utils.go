@@ -175,6 +175,17 @@ func RenderNotFound(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusNotFound).Render("404", data, "layouts/public")
 }
 
+// GetPublicTheme returns the selected public theme, validated against allowed themes.
+// Falls back to "light" if the setting is empty or invalid.
+func GetPublicTheme() string {
+	theme := models.GetSetting(database.DB, "public_theme", "light")
+	switch theme {
+	case "ocean", "forest", "sunset", "midnight", "royal":
+		return theme
+	}
+	return "light"
+}
+
 // GetNavbarData gets Category and Static Page data for navigation menu
 func GetNavbarData() fiber.Map {
 	var categories []models.Category
@@ -188,6 +199,7 @@ func GetNavbarData() fiber.Map {
 	return fiber.Map{
 		"NavCategories": categories,
 		"NavPages":      pages,
+		"PublicTheme":   GetPublicTheme(),
 	}
 }
 

@@ -64,6 +64,13 @@ func ApiCreateTag(c *fiber.Ctx) error {
 		})
 	}
 
+	// Purge Cloudflare cache for this tag and homepage.
+	go func() {
+		if err := utils.PurgeTaxonomyCache(tag.Slug, "tag"); err != nil {
+			utils.LogCloudflareError("API create tag", err)
+		}
+	}()
+
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
 		"success": true,
 		"message": "Tag created successfully",
@@ -104,6 +111,13 @@ func ApiUpdateTag(c *fiber.Ctx) error {
 			"message": "Failed to update tag",
 		})
 	}
+
+	// Purge Cloudflare cache for this tag and homepage.
+	go func() {
+		if err := utils.PurgeTaxonomyCache(tag.Slug, "tag"); err != nil {
+			utils.LogCloudflareError("API edit tag", err)
+		}
+	}()
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"success": true,

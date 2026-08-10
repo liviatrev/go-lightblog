@@ -51,8 +51,8 @@ func ApiUpdateSettings(c *fiber.Ctx) error {
 		"site_title":           true,
 		"site_description":     true,
 		"site_keywords":        true,
-		"site_headline":		true,
-		"site_tagline":			true,
+		"site_headline":		 true,
+		"site_tagline":			 true,
 		"upload_mode":          true,
 		"imagekit_private_key": true,
 		"imagekit_folder":      true,
@@ -62,6 +62,11 @@ func ApiUpdateSettings(c *fiber.Ctx) error {
 		"gemini_api_key":       true,
 		"gemini_model":         true,
 		"login_token":          true,
+		"enable_cloudflare":    true,
+		"cloudflare_api_key":   true,
+		"cloudflare_zone_id":   true,
+		"site_url":             true,
+		"public_theme":         true,
 	}
 
 	var updatedKeys []string

@@ -18,6 +18,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`thumb` template helper**: now returns both WebP and JPG URLs instead of a
   single URL, enabling `<picture>` elements with WebP-first loading in
   `home.html`, `post.html`, `archive.html`, and `search.html`.
+- **Cloudflare Cache Purge Integration**: automatic cache purge by URL (not
+  purge-everything) triggered on create/edit of posts, tags, and categories.
+  A single purge request can include multiple URLs (post, category, tags,
+  homepage). Configurable via `enable_cloudflare`, `cloudflare_api_key`,
+  `cloudflare_zone_id`, and `site_url` settings.
+- **Cache Control Middleware**: global middleware that sets `Cache-Control`
+  headers based on route type:
+  - Static files (`/public/*`): `public, max-age=31536000, immutable` (1 year)
+  - Dynamic pages (home, category, tag, search): `public, max-age=60, s-maxage=86400` (browser 1 min, CDN 1 day)
+  - Post pages (`/post/`, `/page/`): `public, max-age=3600, s-maxage=604800` (browser 1 hour, CDN 7 days)
+  - REST-API and dashboard routes: `no-store` (never cached)
+- **Public Theme Palette System**: 6 ready-to-use color themes for public-facing
+  pages — Light (default), Ocean Blue, Forest Green, Warm Sunset, Midnight Dark,
+  and Royal Purple. Each theme is a standalone CSS file using Bootstrap 5.3 CSS
+  custom properties for easy color overrides.
+- **New setting `public_theme`**: stores the selected public theme name
+  (default: `light`).
 
 ### Changed
 
@@ -32,6 +49,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   **lossy** VP8 encoding with quality control, producing much smaller
   thumbnails than lossless-only encoders.
 - **WYSIWYG Editor**: change editor from Quill JS to SunEditor.
+- **`views/layouts/public.html`**: now injects a dynamic theme stylesheet
+  via the `themeURL` template helper, loaded after `public.min.css`.
+- **`utils/utils.go`**: added `GetPublicTheme()` helper and `PublicTheme` key
+  in `GetNavbarData()` so all public handlers receive the active theme.
+- **`handlers/settings.go`**: reads and saves the `public_theme` setting in
+  both `SettingsView` and `ProcessUpdateSettings`.
+- **`handlers/api_settings.go`**: added `public_theme` to the API settings
+  allowlist.
 
 ### Fixed
 
@@ -53,6 +78,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   than JPG.
 - WebP encoding now uses `PresetPhoto` for photographic content, producing
   better compression for blog cover images.
+- Midnight Dark theme navbar text color: nav links, brand, hamburger toggler,
+  and dropdown items now use light colors that contrast with the dark navbar
+  background, fixing readability issues.
 
 ## [0.0.0] - Initial release
 

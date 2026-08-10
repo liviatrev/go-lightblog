@@ -13,6 +13,7 @@ Dokumentasi ini menjelaskan secara lengkap seluruh endpoint API yang tersedia di
 6. [Endpoint Pengaturan (Settings)](#6-endpoint-pengaturan-settings)
 7. [Endpoint Artikel (Post)](#7-endpoint-artikel-post)
 8. [Endpoint Publik (Public Endpoints)](#8-endpoint-publik-public-endpoints)
+9. [Cache Control & CDN](#9-cache-control--cdn)
 
 ---
 
@@ -500,7 +501,12 @@ curl -X GET http://localhost:5800/api/v1/admin/settings \
     "site_headline": "Selamat Datang di LightBlog",
     "site_tagline": "Sederhana, Cepat, Modern",
     "upload_mode": "local",
-    "enable_gemini": "no"
+    "enable_gemini": "no",
+    "enable_cloudflare": "no",
+    "cloudflare_api_key": "",
+    "cloudflare_zone_id": "",
+    "site_url": "",
+    "public_theme": "light"
   }
 }
 ```
@@ -514,6 +520,8 @@ Memperbarui satu atau beberapa pengaturan secara dinamis. Sistem menerapkan filt
 - `remark42_url`, `remark42_site_id`
 - `enable_gemini`, `gemini_api_key`, `gemini_model`
 - `login_token`
+- `enable_cloudflare`, `cloudflare_api_key`, `cloudflare_zone_id`, `site_url`
+- `public_theme`
 
 *   **URL**: `/`
 *   **Method**: `PUT`
@@ -525,7 +533,12 @@ Memperbarui satu atau beberapa pengaturan secara dinamis. Sistem menerapkan filt
     {
       "site_title": "My New LightBlog",
       "enable_gemini": "yes",
-      "gemini_api_key": "AIzaSy..."
+      "gemini_api_key": "AIzaSy...",
+      "public_theme": "ocean",
+      "enable_cloudflare": "yes",
+      "cloudflare_api_key": "abc123...",
+      "cloudflare_zone_id": "zone-id-123",
+      "site_url": "https://myblog.com"
     }
     ```
 
@@ -830,6 +843,47 @@ Content-Length: 12542
 - `403 Forbidden`: Jika file asal berada di luar direktori yang diizinkan (Proteksi path traversal).
 - `404 Not Found`: Jika file asal gambar (`src`) tidak ditemukan di disk server.
 - `400 Bad Request`: Jika parameter format atau dimensi terlalu ekstrim / tidak didukung.
+
+---
+
+## 9. Cache Control & CDN
+
+Aplikasi **go-lightblog** menerapkan middleware `CacheControl` secara global yang
+mengatur header `Cache-Control` berdasarkan jenis route. Ini memungkinkan
+penggunaan CDN (seperti Cloudflare) secara optimal sekaligus menjaga data sensitif
+tidak tersimpan di cache.
+
+### Aturan Cache Berdasarkan Route
+
+| Route Pattern | Cache-Control Header | Keterangan |
+| :--- | :--- | :--- |
+| `/public/*` (js, css, image) | `public, max-age=31536000, immutable` | Static files di-cache agresif selama 1 tahun dan ditandai immutable |
+| `/` (homepage) | `public, max-age=60, s-maxage=86400` | Browser cache 1 menit, CDN cache 1 hari |
+| `/category/:slug` | `public, max-age=60, s-maxage=86400` | Browser cache 1 menit, CDN cache 1 hari |
+| `/tag/:slug` | `public, max-age=60, s-maxage=86400` | Browser cache 1 menit, CDN cache 1 hari |
+| `/search` | `public, max-age=60, s-maxage=86400` | Browser cache 1 menit, CDN cache 1 hari |
+| `/author/:id` | `public, max-age=60, s-maxage=86400` | Browser cache 1 menit, CDN cache 1 hari |
+| `/post/:slug` | `public, max-age=3600, s-maxage=604800` | Browser cache 1 jam, CDN cache 7 hari |
+| `/page/:slug` | `public, max-age=3600, s-maxage=604800` | Browser cache 1 jam, CDN cache 7 hari |
+| `/api/*` | `no-store` | REST-API tidak pernah di-cache |
+| `/dashboard`, `/posts/*`, `/categories`, `/tags`, `/settings`, `/users`, `/login-*`, `/setup`, `/logout`, `/seo/*` | `no-store` | Dashboard & admin routes tidak pernah di-cache |
+| Semua route lain (fallthrough) | `no-cache` | Tidak ada cache yang diterapkan |
+
+### Cloudflare Cache Purge
+
+Jika fitur Cloudflare diaktifkan (`enable_cloudflare = yes` dengan
+`cloudflare_api_key`, `cloudflare_zone_id`, dan `site_url` yang valid), sistem
+akan otomatis **meng-purge cache berdasarkan URL** (bukan purge everything)
+ketika terjadi perubahan data:
+
+- **Create / Edit Post**: purge URL post, kategori, semua tag, dan homepage
+  dalam satu request.
+- **Create / Edit Category**: purge URL kategori dan homepage.
+- **Create / Edit Tag**: purge URL tag dan homepage.
+
+> **Catatan**: Purge dilakukan secara asynchronous (non-blocking) sehingga
+> tidak menghambat respons API. Jika konfigurasi Cloudflare tidak lengkap,
+> purge akan dilewati tanpa error.
 
 ---
 

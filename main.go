@@ -101,6 +101,15 @@ func main() {
 	engine.AddFunc("cacheBuster", utils.GetCacheBuster)
 	engine.AddFunc("cacheBusterURL", utils.CacheBusterURL)
 
+	// Add theme stylesheet URL helper for public theme
+	engine.AddFunc("themeURL", func(theme string) string {
+		if theme == "" {
+			theme = "light"
+		}
+		path := fmt.Sprintf("/public/css/themes/%s.min.css", theme)
+		return utils.CacheBusterURL(path)
+	})
+
 	// Initialize Fiber App
 	app := fiber.New(fiber.Config{
 		Views:       engine,
@@ -110,6 +119,7 @@ func main() {
 
 	// Register middleware globally here
 	app.Use(middleware.CheckSetup)
+	app.Use(middleware.CacheControl)
 
 	// Serve static files from "public" folder
 	app.Static("/public", *publicPath)

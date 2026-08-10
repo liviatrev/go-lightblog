@@ -30,10 +30,18 @@ func CategoryList(c *fiber.Ctx) error {
 func CategoryCreate(c *fiber.Ctx) error {
 	name := c.FormValue("name")
 	if name != "" {
-		database.DB.Create(&models.Category{
+		category := models.Category{
 			Name: name,
 			Slug: utils.GenerateSlug(name),
-		})
+		}
+		database.DB.Create(&category)
+
+		// Purge Cloudflare cache for this category and homepage.
+		go func() {
+			if err := utils.PurgeTaxonomyCache(category.Slug, "category"); err != nil {
+				utils.LogCloudflareError("create category", err)
+			}
+		}()
 	}
 	return c.Redirect("/categories")
 }
@@ -65,10 +73,18 @@ func TagList(c *fiber.Ctx) error {
 func TagCreate(c *fiber.Ctx) error {
 	name := c.FormValue("name")
 	if name != "" {
-		database.DB.Create(&models.Tag{
+		tag := models.Tag{
 			Name: name,
 			Slug: utils.GenerateSlug(name),
-		})
+		}
+		database.DB.Create(&tag)
+
+		// Purge Cloudflare cache for this tag and homepage.
+		go func() {
+			if err := utils.PurgeTaxonomyCache(tag.Slug, "tag"); err != nil {
+				utils.LogCloudflareError("create tag", err)
+			}
+		}()
 	}
 	return c.Redirect("/tags")
 }

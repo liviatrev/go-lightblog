@@ -36,9 +36,30 @@
                         <label for="site_headline" class="form-label text-muted">Site Headline</label>
                         <input type="text" class="form-control" id="site_headline" name="site_headline" value="{{.SiteHeadline}}">
                     </div>
-                    <div class="mb-4">
+                    <div class="mb-3">
                         <label for="site_tagline" class="form-label text-muted">Site Tagline</label>
                         <input type="text" class="form-control" id="site_tagline" name="site_tagline" value="{{.SiteTagline}}">
+                    </div>
+                    <div class="mb-4">
+                        <label for="public_theme" class="form-label text-muted fw-bold">Public Theme</label>
+                        <select name="public_theme" id="public_theme" class="form-select">
+                            <option value="light" {{if eq .PublicTheme "light"}}selected{{end}}>☀️ Light (Default)</option>
+                            <option value="ocean" {{if eq .PublicTheme "ocean"}}selected{{end}}>🌊 Ocean Blue</option>
+                            <option value="forest" {{if eq .PublicTheme "forest"}}selected{{end}}>🌲 Forest Green</option>
+                            <option value="sunset" {{if eq .PublicTheme "sunset"}}selected{{end}}>🌅 Warm Sunset</option>
+                            <option value="midnight" {{if eq .PublicTheme "midnight"}}selected{{end}}>🌙 Midnight Dark</option>
+                            <option value="royal" {{if eq .PublicTheme "royal"}}selected{{end}}>👑 Royal Purple</option>
+                        </select>
+                        <div class="form-text mt-1">Choose a color palette for the public-facing pages.</div>
+                        <!-- Theme Color Swatches Preview -->
+                        <div class="d-flex align-items-center gap-2 mt-2" id="themeSwatches">
+                            <div class="theme-swatch" data-theme="light" title="Light (Default)" style="width:28px;height:28px;border-radius:50%;background:#ffffff;border:2px solid #dee2e6;cursor:pointer;{{if eq .PublicTheme "light"}}outline:2px solid #0d6efd{{end}}"></div>
+                            <div class="theme-swatch" data-theme="ocean" title="Ocean Blue" style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#0a7c8a,#20c997);cursor:pointer;{{if eq .PublicTheme "ocean"}}outline:2px solid #0d6efd{{end}}"></div>
+                            <div class="theme-swatch" data-theme="forest" title="Forest Green" style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#2d6a4f,#6b8e23);cursor:pointer;{{if eq .PublicTheme "forest"}}outline:2px solid #0d6efd{{end}}"></div>
+                            <div class="theme-swatch" data-theme="sunset" title="Warm Sunset" style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#e76f51,#f4a261);cursor:pointer;{{if eq .PublicTheme "sunset"}}outline:2px solid #0d6efd{{end}}"></div>
+                            <div class="theme-swatch" data-theme="midnight" title="Midnight Dark" style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#121a24,#5b9bd5);cursor:pointer;{{if eq .PublicTheme "midnight"}}outline:2px solid #5b9bd5{{end}}"></div>
+                            <div class="theme-swatch" data-theme="royal" title="Royal Purple" style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#6f42c1,#b8860b);cursor:pointer;{{if eq .PublicTheme "royal"}}outline:2px solid #0d6efd{{end}}"></div>
+                        </div>
                     </div>
             </div>
             <div class="card-footer bg-white text-end">
@@ -93,8 +114,8 @@
                 <div class="card-body">
                     <div class="row">
                         <!-- AI Settings (Gemini) -->
-                        <div class="col-md-12 mb-4">
-                            <div class="card shadow">
+                        <div class="col-md-6 mb-4">
+                            <div class="card shadow h-100">
                                 <div class="card-header bg-white pt-3 pb-2 border-bottom-0">
                                     <h5 class="m-0">🤖 AI Integration (Gemini SEO)</h5>
                                 </div>
@@ -112,6 +133,37 @@
                                         <div class="col-12 col-md-6">
                                             <label class="form-label text-muted">AI Model</label>
                                             <input type="text" name="gemini_model" class="form-control" value="{{.GeminiModel}}" placeholder="gemini-3.6-flash">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Cloudflare Cache Purge Settings -->
+                        <div class="col-md-6 mb-4">
+                            <div class="card shadow h-100">
+                                <div class="card-header bg-white pt-3 pb-2 border-bottom-0">
+                                    <h5 class="m-0">☁️ Cloudflare Cache Purge</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="form-check form-switch">
+                                        <label class="form-check-label" for="cloudflareSwitch">Enable Cloudflare Purge</label>
+                                        <input class="form-check-input" type="checkbox" role="switch" id="cloudflareSwitch" {{if eq .EnableCloudflare "yes" }}checked{{end}}>
+                                        <input type="hidden" name="enable_cloudflare" id="enable_cloudflare" value="{{.EnableCloudflare}}">
+                                    </div>
+                                    <div class="row g-2 mb-3 {{if eq .EnableCloudflare "yes"}}d-flex{{else}}d-none{{end}}" id="cloudflareContainer">
+                                        <div class="col-12">
+                                            <label class="form-label text-muted">Cloudflare API Key</label>
+                                            <input type="password" name="cloudflare_api_key" class="form-control" value="{{.CloudflareKey}}" placeholder="Your Cloudflare API Token">
+                                        </div>
+                                        <div class="col-12">
+                                            <label class="form-label text-muted">Zone ID</label>
+                                            <input type="text" name="cloudflare_zone_id" class="form-control" value="{{.CloudflareZoneID}}" placeholder="Your Cloudflare Zone ID">
+                                        </div>
+                                        <div class="col-12">
+                                            <label class="form-label text-muted">Site URL</label>
+                                            <input type="url" name="site_url" class="form-control" value="{{.SiteURL}}" placeholder="https://example.com">
+                                            <div class="form-text mt-1">Public domain used to build purge URLs. Required for cache purge to work.</div>
                                         </div>
                                     </div>
                                 </div>

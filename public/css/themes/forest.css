@@ -1,0 +1,59 @@
+/* ============================================
+   Forest Green Theme
+   Natural greens, comfortable for long reading
+   ============================================ */
+
+:root {
+    --bs-primary: #2d6a4f;
+    --bs-primary-rgb: 45, 106, 79;
+    --bs-primary-bg-subtle: #d8f3dc;
+    --bs-primary-border-subtle: #b7e4c7;
+    --bs-secondary: #6b8e23;
+    --bs-secondary-rgb: 107, 142, 35;
+    --bs-body-bg: #f4f9f4;
+    --bs-body-color: #1b3a2a;
+    --bs-body-color-rgb: 27, 58, 42;
+    --bs-link-color: #2d6a4f;
+    --bs-link-hover-color: #1b4332;
+    --bs-border-color: #c8e6c9;
+    --bs-light: #e8f5e9;
+    --bs-light-rgb: 232, 245, 233;
+    --bs-dark: #1b4332;
+    --bs-dark-rgb: 27, 67, 50;
+    --bs-card-bg: #ffffff;
+    --bs-card-border-color: rgba(45, 106, 79, 0.15);
+    --bs-navbar-bg: #eaf6ec;
+    --bs-footer-bg: #dcefdf;
+}
+
+body {
+    background-color: var(--bs-body-bg);
+    color: var(--bs-body-color);
+    background-image: linear-gradient(180deg, rgba(45, 106, 79, 0.05), transparent 200px);
+}
+
+.blog-header {
+    border-bottom-color: #b7e4c7;
+}
+
+.blog-title {
+    color: #2d6a4f;
+}
+
+.blog-title:hover {
+    color: #1b4332;
+}
+
+.navbar {
+    background-color: var(--bs-navbar-bg) !important;
+    border-bottom-color: #b7e4c7 !important;
+}
+
+footer {
+    background-color: var(--bs-footer-bg);
+    border-top-color: #b7e4c7 !important;
+}
+
+.badge.bg-secondary {
+    background-color: var(--bs-secondary) !important;
+}

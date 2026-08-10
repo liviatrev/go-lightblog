@@ -24,6 +24,11 @@ func SettingsView(c *fiber.Ctx) error {
 	enableGemini := models.GetSetting(database.DB, "enable_gemini", "no")
 	geminiKey := models.GetSetting(database.DB, "gemini_api_key", "")
 	geminiModel := models.GetSetting(database.DB, "gemini_model", "gemini-flash-latest")
+	enableCloudflare := models.GetSetting(database.DB, "enable_cloudflare", "no")
+	cloudflareKey := models.GetSetting(database.DB, "cloudflare_api_key", "")
+	cloudflareZoneID := models.GetSetting(database.DB, "cloudflare_zone_id", "")
+	siteURL := models.GetSetting(database.DB, "site_url", "")
+	publicTheme := utils.GetPublicTheme()
 	siteDesc := models.GetSetting(database.DB, "site_description", "A minimal and fast blog powered by Go Fiber.")
 	siteKeywords := models.GetSetting(database.DB, "site_keywords", "blog, go, fiber, lightblog")
 	siteHeadline := models.GetSetting(database.DB, "site_headline", "Explore Articles")
@@ -31,26 +36,31 @@ func SettingsView(c *fiber.Ctx) error {
 	loginToken := models.GetSetting(database.DB, "login_token", "admin")
 
 	return c.Render("dashboard/settings", fiber.Map{
-		"Title":           "Settings",
-		"HeaderTitle":     "System Settings",
-		"SiteTitle":       siteTitle,
-		"ActiveMenu":      "settings",
-		"Message":         msg,
-		"UserName":        su.UserName,
-		"UserRole":        su.UserRole,
-		"UploadMode":      uploadMode,
-		"ImagekitKey":     imagekitKey,
-		"ImagekitFolder":  imagekitFolder,
-		"Remark42URL":     remark42URL,
-		"Remark42SiteID":  remark42SiteID,
-		"GeminiKey":       geminiKey,
-		"GeminiModel":     geminiModel,
-		"SiteDesc":        siteDesc,
-		"SiteKeywords":    siteKeywords,
-		"SiteHeadline":	   siteHeadline,
-		"SiteTagline":	   siteTagline,
-		"EnableGemini":    enableGemini,
-		"LoginToken":      loginToken,
+		"Title":            "Settings",
+		"HeaderTitle":      "System Settings",
+		"SiteTitle":        siteTitle,
+		"ActiveMenu":       "settings",
+		"Message":          msg,
+		"UserName":         su.UserName,
+		"UserRole":         su.UserRole,
+		"UploadMode":       uploadMode,
+		"ImagekitKey":      imagekitKey,
+		"ImagekitFolder":   imagekitFolder,
+		"Remark42URL":      remark42URL,
+		"Remark42SiteID":   remark42SiteID,
+		"GeminiKey":        geminiKey,
+		"GeminiModel":      geminiModel,
+		"EnableCloudflare": enableCloudflare,
+		"CloudflareKey":    cloudflareKey,
+		"CloudflareZoneID": cloudflareZoneID,
+		"SiteURL":          siteURL,
+		"PublicTheme":      publicTheme,
+		"SiteDesc":         siteDesc,
+		"SiteKeywords":     siteKeywords,
+		"SiteHeadline":     siteHeadline,
+		"SiteTagline":      siteTagline,
+		"EnableGemini":     enableGemini,
+		"LoginToken":       loginToken,
 	}, "layouts/main")
 }
 
@@ -61,7 +71,7 @@ func ProcessUpdateSettings(c *fiber.Ctx) error {
 		return c.Redirect("/settings?msg=error_empty")
 	}
 
-	keys := []string{"site_title", "site_description", "site_keywords", "site_headline", "site_tagline"}
+	keys := []string{"site_title", "site_description", "site_keywords", "site_headline", "site_tagline", "public_theme"}
 	for _, key := range keys {
 		database.DB.Save(&models.Setting{
 			Key:   key,
@@ -106,7 +116,7 @@ func ProcessUpdatePassword(c *fiber.Ctx) error {
 }
 
 func ProcessUpdateIntegrations(c *fiber.Ctx) error {
-	keys := []string{"upload_mode", "imagekit_private_key", "imagekit_folder", "remark42_url", "remark42_site_id", "enable_gemini", "gemini_api_key", "gemini_model"}
+	keys := []string{"upload_mode", "imagekit_private_key", "imagekit_folder", "remark42_url", "remark42_site_id", "enable_gemini", "gemini_api_key", "gemini_model", "enable_cloudflare", "cloudflare_api_key", "cloudflare_zone_id", "site_url"}
 
 	for _, key := range keys {
 		database.DB.Save(&models.Setting{

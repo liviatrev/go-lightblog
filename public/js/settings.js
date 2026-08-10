@@ -22,3 +22,36 @@ document.getElementById('geminiSwitch').addEventListener('change', function () {
         geminiHidden.value = 'no';
     }
 });
+
+document.getElementById('cloudflareSwitch').addEventListener('change', function () {
+    var cloudflareContainer = document.getElementById('cloudflareContainer');
+    var cloudflareHidden = document.getElementById('enable_cloudflare');
+    if (this.checked) {
+        cloudflareContainer.classList.remove('d-none');
+        cloudflareContainer.classList.add('d-flex');
+        cloudflareHidden.value = 'yes';
+    } else {
+        cloudflareContainer.classList.remove('d-flex');
+        cloudflareContainer.classList.add('d-none');
+        cloudflareHidden.value = 'no';
+    }
+});
+
+// Theme Picker: click a swatch to select the theme
+document.querySelectorAll('.theme-swatch').forEach(function (swatch) {
+    swatch.addEventListener('click', function () {
+        var theme = this.getAttribute('data-theme');
+        var select = document.getElementById('public_theme');
+
+        if (select) {
+            select.value = theme;
+            // Remove previous outline on all swatches
+            document.querySelectorAll('.theme-swatch').forEach(function (s) {
+                s.style.outline = '';
+            });
+            // Highlight the selected swatch
+            this.style.outline = '2px solid #0d6efd';
+            this.style.outlineOffset = '1px';
+        }
+    });
+});
