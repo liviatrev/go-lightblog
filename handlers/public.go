@@ -83,6 +83,36 @@ func ReadPost(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusNotFound).SendString("Article not found or not published.")
 	}
 
+	// Find related posts that share the same category or at least one tag (max 3)
+	var relatedPosts []models.Post
+	relatedConditions := []string{}
+	var relatedArgs []interface{}
+
+	if post.CategoryID != 0 {
+		relatedConditions = append(relatedConditions, "category_id = ?")
+		relatedArgs = append(relatedArgs, post.CategoryID)
+	}
+
+	if len(post.Tags) > 0 {
+		tagPlaceholders := make([]string, 0, len(post.Tags))
+		for _, tag := range post.Tags {
+			tagPlaceholders = append(tagPlaceholders, "?")
+			relatedArgs = append(relatedArgs, tag.ID)
+		}
+		relatedConditions = append(relatedConditions,
+			"id IN (SELECT post_id FROM post_tags WHERE tag_id IN ("+strings.Join(tagPlaceholders, ", ")+"))")
+	}
+
+	if len(relatedConditions) > 0 {
+		database.DB.
+			Select("id, title, slug, cover_image").
+			Where("id <> ? AND is_draft = ? AND type = ?", post.ID, false, "post").
+			Where("("+strings.Join(relatedConditions, " OR ")+")", relatedArgs...).
+			Order("created_at desc").
+			Limit(3).
+			Find(&relatedPosts)
+	}
+
 	baseURL := c.BaseURL()
 	metaImageURL := post.CoverImage
 	if metaImageURL != "" && !strings.HasPrefix(metaImageURL, "http") {
@@ -95,6 +125,7 @@ func ReadPost(c *fiber.Ctx) error {
 	data["SiteDescription"] = post.MetaDescription
 	data["SiteKeywords"] = post.TargetKeyword
 	data["Post"] = post
+	data["RelatedPosts"] = relatedPosts
 	data["MetaImageURL"] = metaImageURL
 	data["Remark42URL"] = remark42URL
 	data["Remark42SiteID"] = remark42SiteID
