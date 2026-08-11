@@ -129,6 +129,7 @@ func ReadPost(c *fiber.Ctx) error {
 	data["MetaImageURL"] = metaImageURL
 	data["Remark42URL"] = remark42URL
 	data["Remark42SiteID"] = remark42SiteID
+	data["CurrentURL"] = baseURL + c.Path()
 
 	// Generate breadcrumbs
 	breadcrumbs := utils.GenerateBreadcrumbs(post)
