@@ -43,6 +43,7 @@ func Connect(dbPath string) {
 		&models.Category{}, 
 		&models.Tag{}, 
 		&models.Post{},
+		&models.SlugRedirect{},
 	)
 	if err != nil {
 		log.Fatalf("Failed to migrate database: %v", err)

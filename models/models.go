@@ -43,6 +43,14 @@ type Tag struct {
 }
 
 // Post evolved with SEO columns, Author, and Relationships
+// SlugRedirect maps previous post slugs to new ones
+type SlugRedirect struct {
+	ID      uint   `gorm:"primaryKey"`
+	OldSlug string `gorm:"uniqueIndex;not null"`
+	NewSlug string `gorm:"not null"`
+}
+
+// Post evolved with SEO columns, Author, and Relationships
 type Post struct {
 	ID              uint      `gorm:"primaryKey"`
 	Title           string    `gorm:"not null"`

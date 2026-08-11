@@ -71,6 +71,15 @@ func ReadPost(c *fiber.Ctx) error {
 		Preload("Tags").
 		Preload("Author").
 		First(&post).Error; err != nil {
+		// If slug is not found in posts, look it up in slug_redirects
+		var redirect models.SlugRedirect
+		if errRedirect := database.DB.Where("old_slug = ?", slug).First(&redirect).Error; errRedirect == nil {
+			prefix := "/post/"
+			if strings.HasPrefix(c.Path(), "/page/") {
+				prefix = "/page/"
+			}
+			return c.Redirect(prefix+redirect.NewSlug, fiber.StatusMovedPermanently)
+		}
 		return c.Status(fiber.StatusNotFound).SendString("Article not found or not published.")
 	}
 

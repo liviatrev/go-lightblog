@@ -177,6 +177,8 @@ func ProcessEditPost(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusNotFound).SendString("Post not found")
 	}
 
+	oldSlug := post.Slug
+
 	title := c.FormValue("title")
 	content := c.FormValue("content")
 
@@ -204,6 +206,13 @@ func ProcessEditPost(c *fiber.Ctx) error {
 
 	if err := database.DB.Save(&post).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).SendString("Failed to update post")
+	}
+
+	if oldSlug != post.Slug {
+		database.DB.Create(&models.SlugRedirect{
+			OldSlug: oldSlug,
+			NewSlug: post.Slug,
+		})
 	}
 
 	tagsArgs := c.Request().PostArgs().PeekMulti("tags[]")

@@ -149,6 +149,8 @@ func ApiUpdatePost(c *fiber.Ctx) error {
 		})
 	}
 
+	oldSlug := post.Slug
+
 	// 1. Prepare container for partial data
 	// Columns adjusted to GORM database column names (snake_case)
 	updateData := make(map[string]interface{})
@@ -157,7 +159,11 @@ func ApiUpdatePost(c *fiber.Ctx) error {
 	form, err := c.MultipartForm()
 	if err == nil && form != nil {
 		if values, exists := form.Value["title"]; exists && len(values) > 0 {
-			updateData["title"] = values[0]
+			newTitle := values[0]
+			if post.Title != newTitle {
+				updateData["title"] = newTitle
+				updateData["slug"] = utils.GenerateUniqueSlug(newTitle, post.ID)
+			}
 		}
 		if values, exists := form.Value["content"]; exists && len(values) > 0 {
 			updateData["content"] = values[0]
@@ -221,6 +227,13 @@ func ApiUpdatePost(c *fiber.Ctx) error {
 			return db.Select("id, username, name, role")
 		}).
 		First(&post, post.ID)
+
+	if oldSlug != post.Slug {
+		database.DB.Create(&models.SlugRedirect{
+			OldSlug: oldSlug,
+			NewSlug: post.Slug,
+		})
+	}
 
 	// Purge Cloudflare cache for this post, its category, tags, and homepage.
 	go func() {
