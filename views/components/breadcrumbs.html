@@ -1,0 +1,13 @@
+{{ define "components/breadcrumbs.html" }}
+<nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb small">
+        {{ range .Breadcrumbs }}
+            {{ if .URL }}
+                <li class="breadcrumb-item"><a href="{{ .URL }}" class="text-decoration-none text-muted">{{ .Name }}</a></li>
+            {{ else }}
+                <li class="breadcrumb-item active fw-medium text-primary" aria-current="page">{{ .Name }}</li>
+            {{ end }}
+        {{ end }}
+    </ol>
+</nav>
+{{ end }}

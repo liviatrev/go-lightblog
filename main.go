@@ -7,6 +7,7 @@ import (
 	"html/template"
 	"io/fs"
 	"log"
+	"encoding/json"
 	"net"
 	"net/http"
 	"os"
@@ -22,11 +23,13 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/template/html/v2"
+	"github.com/gofiber/fiber/v2/middleware/logger"
 )
 
 //go:embed views/*
 //go:embed views/dashboard/*
 //go:embed views/layouts/*
+//go:embed views/components/*
 var viewsFS embed.FS
 
 // ThumbURLs holds both variants produced by the "thumb" template function,
@@ -67,7 +70,15 @@ func main() {
 		return template.HTML(s)
 	})
 
-	// Add Custom Function (Can be called in HTML)
+	// Add json_encode function for JSON-LD
+	engine.AddFunc("json_encode", func(data interface{}) (template.JS, error) {
+		b, err := json.Marshal(data)
+		if err != nil {
+			return "", err
+		}
+		return template.JS(b), nil
+	})
+
 	engine.AddFunc("thumb", func(url string, width int) ThumbURLs {
 		if url == "" {
 			// Default image URL if post has no cover
@@ -116,6 +127,10 @@ func main() {
 		AppName:     "go-lightblog",
 		IdleTimeout: 10 * time.Second, // Light optimization for connection management
 	})
+
+	app.Use(logger.New(logger.Config{
+        Format: "[${ip}]:${port} ${status} - ${method} ${path} | ${error}\n",
+    }))
 
 	// Register middleware globally here
 	app.Use(middleware.CheckSetup)

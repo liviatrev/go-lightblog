@@ -75,6 +75,9 @@
     }
     </script>
     {{end}}
+    {{ if .NoIndex }}
+    <meta name="robots" content="noindex, nofollow">
+    {{end}}
 </head>
 <body>
     <div class="container public-container">

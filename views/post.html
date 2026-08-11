@@ -1,13 +1,14 @@
 <!-- views/post.html -->
 <div class="mt-4 mb-5 mx-2">
-    
-    <!-- Breadcrumb / Category -->
-    <nav aria-label="breadcrumb" class="mb-4">
-        <ol class="breadcrumb small">
-            <li class="breadcrumb-item"><a href="/" class="text-decoration-none text-muted">Home</a></li>
-            <li class="breadcrumb-item active fw-medium text-primary" aria-current="page">{{.Post.Category.Name}}</li>
-        </ol>
-    </nav>
+    <!-- Breadcrumbs Component -->
+    {{ template "components/breadcrumbs.html" . }}
+
+    <!-- JSON-LD BreadcrumbList Schema -->
+    {{ if .BreadcrumbSchema }}
+    <script type="application/ld+json">
+        {{ .BreadcrumbSchema | json_encode }}
+    </script>
+    {{ end }}
 
     <!-- Article Title -->
     <h1 class="fw-bold mb-3 lh-base">{{.Post.Title}}</h1>
@@ -28,7 +29,7 @@
         {{$cover := thumb .Post.CoverImage 800}}
         <picture>
             <source srcset="{{$cover.WebP}}" type="image/webp">
-            <img src="{{$cover.JPG}}" class="img-fluid rounded mb-5 shadow-sm w-100 post-cover" alt="{{.Post.Title}}">
+            <img src="{{$cover.JPG}}" class="img-fluid rounded mb-5 shadow-sm w-100 post-cover" alt="{{if .Post.TargetKeyword}}{{.Post.TargetKeyword}}{{else}}{{.Post.Title}}{{end}}">
         </picture>
     {{end}}
 

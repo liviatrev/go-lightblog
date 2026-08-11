@@ -19,7 +19,7 @@
                     {{$cover := thumb .CoverImage 300}}
                     <picture>
                         <source srcset="{{$cover.WebP}}" type="image/webp">
-                        <img src="{{$cover.JPG}}" class="card-img-top card-img-cover" alt="{{.Title}}">
+                        <img src="{{$cover.JPG}}" class="card-img-top card-img-cover" alt="{{if .TargetKeyword}}{{.TargetKeyword}}{{else}}{{.Title}}{{end}}">
                     </picture>
                 {{else}}
                     <!-- Placeholder if no image -->

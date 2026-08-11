@@ -99,6 +99,11 @@ func ReadPost(c *fiber.Ctx) error {
 	data["Remark42URL"] = remark42URL
 	data["Remark42SiteID"] = remark42SiteID
 
+	// Generate breadcrumbs
+	breadcrumbs := utils.GenerateBreadcrumbs(post)
+	data["Breadcrumbs"] = breadcrumbs
+	data["BreadcrumbSchema"] = utils.GenerateBreadcrumbListSchema(breadcrumbs, baseURL)
+
 	return c.Render("post", data, "layouts/public")
 }
 
@@ -145,6 +150,7 @@ func SearchPosts(c *fiber.Ctx) error {
 	data["HasNext"] = page < totalPages
 	data["PrevPage"] = page - 1
 	data["NextPage"] = page + 1
+	data["NoIndex"] = true
 
 	return c.Render("search", data, "layouts/public")
 }
