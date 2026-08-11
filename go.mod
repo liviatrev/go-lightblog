@@ -10,6 +10,7 @@ require (
 	github.com/gofiber/template/html/v2 v2.1.3
 	github.com/imagekit-developer/imagekit-go/v2 v2.9.0
 	golang.org/x/crypto v0.54.0
+	golang.org/x/image v0.24.0
 	google.golang.org/genai v1.66.0
 	gorm.io/gorm v1.31.2
 )
@@ -46,7 +47,6 @@ require (
 	github.com/valyala/fasthttp v1.51.0 // indirect
 	github.com/valyala/tcplisten v1.0.0 // indirect
 	go.opencensus.io v0.24.0 // indirect
-	golang.org/x/image v0.24.0 // indirect
 	golang.org/x/net v0.56.0 // indirect
 	golang.org/x/sys v0.47.0 // indirect
 	golang.org/x/text v0.40.0 // indirect

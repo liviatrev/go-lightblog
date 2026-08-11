@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"image"
 	"image/draw"
+	"io"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -207,7 +208,9 @@ func GetNavbarData() fiber.Map {
 // 6. FILE UPLOAD HELPERS
 // ============================================================
 
-// ProcessUpload handles file upload (image) with mode: local or ImageKit CDN
+// ProcessUpload handles file upload (image) with mode: local or ImageKit CDN.
+// It reads the file from the multipart form field, validates it, and stores it
+// through the shared UploadImageFile pipeline.
 func ProcessUpload(c *fiber.Ctx, formField string) (string, error) {
 	fileHeader, err := c.FormFile(formField)
 	if err != nil {
@@ -227,6 +230,20 @@ func ProcessUpload(c *fiber.Ctx, formField string) (string, error) {
 	timestamp := strconv.FormatInt(time.Now().Unix(), 10)
 	filename := fmt.Sprintf("%s_%s%s", nameOnly, timestamp, ext)
 
+	file, err := fileHeader.Open()
+	if err != nil {
+		return "", err
+	}
+	defer file.Close()
+
+	return UploadImageFile(filename, file)
+}
+
+// UploadImageFile stores an image (from an io.Reader) using the configured
+// upload mode: local storage under public/uploads or ImageKit CDN.
+// It is shared by ProcessUpload (manual uploads) and GenerateCoverImage
+// (auto-generated cover images) so both flow through the same pipeline.
+func UploadImageFile(filename string, r io.Reader) (string, error) {
 	uploadMode := models.GetSetting(database.DB, "upload_mode", "local")
 
 	if uploadMode == "local" {
@@ -237,7 +254,13 @@ func ProcessUpload(c *fiber.Ctx, formField string) (string, error) {
 
 		savePath := filepath.Join(uploadDir, filename)
 
-		if err := c.SaveFile(fileHeader, savePath); err != nil {
+		out, err := os.Create(savePath)
+		if err != nil {
+			return "", err
+		}
+		defer out.Close()
+
+		if _, err := io.Copy(out, r); err != nil {
 			return "", err
 		}
 
@@ -245,12 +268,6 @@ func ProcessUpload(c *fiber.Ctx, formField string) (string, error) {
 	}
 
 	// ImageKit CDN logic
-	file, err := fileHeader.Open()
-	if err != nil {
-		return "", err
-	}
-	defer file.Close()
-
 	imagekitKey := models.GetSetting(database.DB, "imagekit_private_key", "")
 	imagekitFolder := models.GetSetting(database.DB, "imagekit_folder", "/lightblog")
 	ik := imagekit.NewClient(
@@ -258,7 +275,7 @@ func ProcessUpload(c *fiber.Ctx, formField string) (string, error) {
 	)
 
 	resp, err := ik.Files.Upload(context.TODO(), imagekit.FileUploadParams{
-		File:     file,
+		File:     r,
 		FileName: filename,
 		Folder:   param.Opt[string]{Value: imagekitFolder},
 	})

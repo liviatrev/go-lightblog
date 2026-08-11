@@ -4,6 +4,7 @@ package handlers
 import (
 	"math"
 	"strconv"
+	"strings"
 
 	"go-lightblog/database"
 	"go-lightblog/models"
@@ -89,6 +90,15 @@ func ProcessCreatePost(c *fiber.Ctx) error {
 	targetKeyword := c.FormValue("target_keyword")
 
 	slug := utils.GenerateUniqueSlug(title)
+
+	// Auto-generate a cover image when the user did not upload one.
+	if strings.TrimSpace(coverImage) == "" {
+		if coverURL, genErr := utils.GenerateCoverImage(slug, title); genErr == nil && coverURL != "" {
+			coverImage = coverURL
+		} else if genErr != nil {
+			utils.LogCloudflareError("auto cover create", genErr)
+		}
+	}
 
 	tagsArgs := c.Request().PostArgs().PeekMulti("tags[]")
 	var selectedTags []models.Tag
@@ -193,7 +203,20 @@ func ProcessEditPost(c *fiber.Ctx) error {
 	post.Title = title
 	post.Content = content
 	post.IsDraft = c.FormValue("isDraft") == "true"
-	post.CoverImage = c.FormValue("cover_image")
+
+	// Keep existing cover unless the user provided a new one or the post
+	// has never had a cover (in which case auto-generate from the slug).
+	incomingCover := c.FormValue("cover_image")
+	if strings.TrimSpace(incomingCover) != "" {
+		post.CoverImage = incomingCover
+	} else if strings.TrimSpace(post.CoverImage) == "" {
+		if coverURL, genErr := utils.GenerateCoverImage(post.Slug, title); genErr == nil && coverURL != "" {
+			post.CoverImage = coverURL
+		} else if genErr != nil {
+			utils.LogCloudflareError("auto cover edit", genErr)
+		}
+	}
+
 	post.MetaTitle = c.FormValue("meta_title")
 	post.MetaDescription = c.FormValue("meta_description")
 	post.TargetKeyword = c.FormValue("target_keyword")

@@ -74,6 +74,13 @@ func ApiCreatePost(c *fiber.Ctx) error {
 	coverURL, err := utils.ProcessUpload(c, "cover")
 	if err == nil && coverURL != "" {
 		post.CoverImage = coverURL
+	} else if strings.TrimSpace(post.CoverImage) == "" {
+		// Auto-generate a cover image from the slug when no cover was uploaded.
+		if genURL, genErr := utils.GenerateCoverImage(post.Slug, title); genErr == nil && genURL != "" {
+			post.CoverImage = genURL
+		} else if genErr != nil {
+			utils.LogCloudflareError("API auto cover create", genErr)
+		}
 	}
 
 	enableGemini := models.GetSetting(database.DB, "enable_gemini", "no")
@@ -190,6 +197,20 @@ func ApiUpdatePost(c *fiber.Ctx) error {
 	coverURL, errUpload := utils.ProcessUpload(c, "cover")
 	if errUpload == nil && coverURL != "" {
 		updateData["cover_image"] = coverURL
+	} else if strings.TrimSpace(post.CoverImage) == "" {
+		// Auto-generate a cover image when the post has never had one and the
+		// user did not provide a new upload. Use the (possibly updated) title
+		// for the slug so the generated cover reflects the current title.
+		genTitle := post.Title
+		if values, exists := form.Value["title"]; exists && len(values) > 0 && values[0] != "" {
+			genTitle = values[0]
+		}
+		genSlug := utils.GenerateUniqueSlug(genTitle, post.ID)
+		if genURL, genErr := utils.GenerateCoverImage(genSlug, genTitle); genErr == nil && genURL != "" {
+			updateData["cover_image"] = genURL
+		} else if genErr != nil {
+			utils.LogCloudflareError("API auto cover update", genErr)
+		}
 	}
 
 	// 4. Execute Partial Update ONLY if there is data sent
