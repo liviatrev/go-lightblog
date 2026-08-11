@@ -41,6 +41,7 @@ func CategoryCreate(c *fiber.Ctx) error {
 			if err := utils.PurgeTaxonomyCache(category.Slug, "category"); err != nil {
 				utils.LogCloudflareError("create category", err)
 			}
+			utils.PurgeSitemapCache()
 		}()
 	}
 	return c.Redirect("/categories")
@@ -48,6 +49,7 @@ func CategoryCreate(c *fiber.Ctx) error {
 
 func CategoryDelete(c *fiber.Ctx) error {
 	database.DB.Delete(&models.Category{}, c.Params("id"))
+	go utils.PurgeSitemapCache()
 	return c.Redirect("/categories")
 }
 
@@ -84,6 +86,7 @@ func TagCreate(c *fiber.Ctx) error {
 			if err := utils.PurgeTaxonomyCache(tag.Slug, "tag"); err != nil {
 				utils.LogCloudflareError("create tag", err)
 			}
+			utils.PurgeSitemapCache()
 		}()
 	}
 	return c.Redirect("/tags")
@@ -91,5 +94,6 @@ func TagCreate(c *fiber.Ctx) error {
 
 func TagDelete(c *fiber.Ctx) error {
 	database.DB.Delete(&models.Tag{}, c.Params("id"))
+	go utils.PurgeSitemapCache()
 	return c.Redirect("/tags")
 }

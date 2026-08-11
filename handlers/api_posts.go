@@ -128,6 +128,7 @@ func ApiCreatePost(c *fiber.Ctx) error {
 		if err := utils.PurgePostCache(post.ID); err != nil {
 			utils.LogCloudflareError("API create post", err)
 		}
+		utils.PurgeSitemapCache()
 	}()
 
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
@@ -226,6 +227,7 @@ func ApiUpdatePost(c *fiber.Ctx) error {
 		if err := utils.PurgePostCache(post.ID); err != nil {
 			utils.LogCloudflareError("API edit post", err)
 		}
+		utils.PurgeSitemapCache()
 	}()
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
@@ -239,8 +241,8 @@ func ApiDeletePost(c *fiber.Ctx) error {
 	id := c.Params("id")
 	var post models.Post
 
-	// Check if article with that ID exists
-	if err := database.DB.First(&post, id).Error; err != nil {
+	// Check if article with that ID exists (preload Category and Tags for cache purging)
+	if err := database.DB.Preload("Category").Preload("Tags").First(&post, id).Error; err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 			"success": false,
 			"message": "Article not found",
@@ -255,6 +257,14 @@ func ApiDeletePost(c *fiber.Ctx) error {
 			"message": "Failed to delete article",
 		})
 	}
+
+	// Purge Cloudflare cache for this post, its category, tags, and homepage.
+	go func() {
+		if err := utils.PurgePostCacheByPost(post); err != nil {
+			utils.LogCloudflareError("API delete post", err)
+		}
+		utils.PurgeSitemapCache()
+	}()
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"success": true,

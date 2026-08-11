@@ -70,6 +70,7 @@ func ApiCreateCategory(c *fiber.Ctx) error {
 		if err := utils.PurgeTaxonomyCache(category.Slug, "category"); err != nil {
 			utils.LogCloudflareError("API create category", err)
 		}
+		utils.PurgeSitemapCache()
 	}()
 
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
@@ -120,6 +121,7 @@ func ApiUpdateCategory(c *fiber.Ctx) error {
 		if err := utils.PurgeTaxonomyCache(category.Slug, "category"); err != nil {
 			utils.LogCloudflareError("API edit category", err)
 		}
+		utils.PurgeSitemapCache()
 	}()
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
@@ -147,6 +149,8 @@ func ApiDeleteCategory(c *fiber.Ctx) error {
 			"message": "Failed to delete category",
 		})
 	}
+
+	go utils.PurgeSitemapCache()
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"success": true,

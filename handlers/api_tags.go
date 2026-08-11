@@ -69,6 +69,7 @@ func ApiCreateTag(c *fiber.Ctx) error {
 		if err := utils.PurgeTaxonomyCache(tag.Slug, "tag"); err != nil {
 			utils.LogCloudflareError("API create tag", err)
 		}
+		utils.PurgeSitemapCache()
 	}()
 
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
@@ -117,6 +118,7 @@ func ApiUpdateTag(c *fiber.Ctx) error {
 		if err := utils.PurgeTaxonomyCache(tag.Slug, "tag"); err != nil {
 			utils.LogCloudflareError("API edit tag", err)
 		}
+		utils.PurgeSitemapCache()
 	}()
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
@@ -144,6 +146,8 @@ func ApiDeleteTag(c *fiber.Ctx) error {
 			"message": "Failed to delete tag",
 		})
 	}
+
+	go utils.PurgeSitemapCache()
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"success": true,

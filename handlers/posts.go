@@ -122,6 +122,7 @@ func ProcessCreatePost(c *fiber.Ctx) error {
 		if err := utils.PurgePostCache(post.ID); err != nil {
 			utils.LogCloudflareError("create post", err)
 		}
+		utils.PurgeSitemapCache()
 	}()
 
 	return c.Redirect("/posts")
@@ -219,20 +220,34 @@ func ProcessEditPost(c *fiber.Ctx) error {
 		if err := utils.PurgePostCache(post.ID); err != nil {
 			utils.LogCloudflareError("edit post", err)
 		}
+		utils.PurgeSitemapCache()
 	}()
 
 	return c.Redirect("/posts")
 }
 
-// DeletePost deletes an article from the database
+// DeletePost deletes an article from the database (soft delete)
 func DeletePost(c *fiber.Ctx) error {
 	id := c.Params("id")
-	
-	// GORM Unscoped for hard delete (permanent deletion)
-	// If you want soft delete later, remove .Unscoped()
-	if err := database.DB.Unscoped().Delete(&models.Post{}, id).Error; err != nil {
+
+	// Get post with category and tags for cache purging
+	var post models.Post
+	if err := database.DB.Preload("Category").Preload("Tags").First(&post, id).Error; err != nil {
+		return c.Status(fiber.StatusNotFound).SendString("Post not found")
+	}
+
+	// Soft delete (sets DeletedAt, keeps record in database)
+	if err := database.DB.Delete(&post).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).SendString("Failed to delete post")
 	}
+
+	// Purge Cloudflare cache using already-loaded post data
+	go func() {
+		if err := utils.PurgePostCacheByPost(post); err != nil {
+			utils.LogCloudflareError("delete post", err)
+		}
+		utils.PurgeSitemapCache()
+	}()
 
 	return c.Redirect("/posts")
 }

@@ -40,6 +40,12 @@ func CacheControl(c *fiber.Ctx) error {
 		return c.Next()
 	}
 
+	// Sitemap: browser 1 hour, CDN 1 day
+	if path == "/sitemap.xml" {
+		c.Set("Cache-Control", "public, max-age=3600, s-maxage=86400")
+		return c.Next()
+	}
+
 	// Post and page routes: browser 1 hour, CDN 7 days
 	if strings.HasPrefix(path, "/post/") || strings.HasPrefix(path, "/page/") {
 		c.Set("Cache-Control", "public, max-age=3600, s-maxage=604800")

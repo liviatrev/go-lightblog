@@ -166,6 +166,8 @@ func main() {
 	app.Get("/api/thumb", handlers.ImageThumbProxy)
 	// Public Search Route
 	app.Get("/search", handlers.SearchPosts)
+	// Dynamic Sitemap XML
+	app.Get("/sitemap.xml", handlers.Sitemap)
 
 	// Archive Routes (Category, Tag, Author)
 	app.Get("/category/:slug", handlers.CategoryPosts)

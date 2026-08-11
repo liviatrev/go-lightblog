@@ -157,6 +157,27 @@ func PurgePostCache(postID uint) error {
 	return purgeCloudflareURLs(urls)
 }
 
+// PurgePostCacheByPost purges cache for a post using an already-loaded post object.
+// This avoids re-querying the database and works with soft-deleted posts.
+func PurgePostCacheByPost(post models.Post) error {
+	urls := buildPostPurgeURLs(post)
+	return purgeCloudflareURLs(urls)
+}
+
+// PurgeSitemapCache purges the sitemap.xml URL from Cloudflare cache.
+func PurgeSitemapCache() error {
+	baseURL := GetSiteURL()
+	if baseURL == "" || !IsCloudflareEnabled() {
+		return nil
+	}
+
+	for len(baseURL) > 1 && baseURL[len(baseURL)-1] == '/' {
+		baseURL = baseURL[:len(baseURL)-1]
+	}
+
+	return purgeCloudflareURLs([]string{baseURL + "/sitemap.xml"})
+}
+
 // PurgePostCacheBySlug purges cache for a post using its slug.
 // Useful when the post object isn't fully loaded in the handler.
 func PurgePostCacheBySlug(slug, postType string) error {
