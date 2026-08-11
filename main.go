@@ -173,6 +173,27 @@ func main() {
 	app.Get("/category/:slug", handlers.CategoryPosts)
 	app.Get("/tag/:slug", handlers.TagPosts)
 	app.Get("/author/:id", handlers.AuthorPosts)
+	// Route untuk robots.txt
+	app.Get("/robots.txt", func(c *fiber.Ctx) error {
+		// Ambil domain dinamis atau dari pengaturan site_url
+		baseURL := c.BaseURL() 
+
+		robotsContent := fmt.Sprintf(`User-agent: *
+	Allow: /
+	Allow: /public/uploads/
+
+	Disallow: /dashboard/
+	Disallow: /api/v1/admin/
+	Disallow: /login-*
+	Disallow: /logout
+	Disallow: /setup
+	Disallow: /search?*
+
+	Sitemap: %s/sitemap.xml`, baseURL)
+
+		c.Set("Content-Type", "text/plain")
+		return c.SendString(robotsContent)
+	})
 
 	// ==========================================
 	// CMS MANAGEMENT API (ADMIN / EDITOR ONLY)

@@ -27,6 +27,9 @@
         {{if .MetaImageURL}}
         <meta name="twitter:image" content="{{.MetaImageURL}}">
         {{end}}
+
+        <!-- Canonical URL Tags -->
+         <link rel="canonical" href="{{.SiteURL}}/post/{{.Post.Slug}}">
     {{else}}
         <!-- Global Homepage SEO -->
         <title>{{.SiteTitle}}</title>
@@ -37,6 +40,8 @@
         <meta property="og:title" content="{{.SiteTitle}}">
         <meta property="og:description" content="{{.SiteDescription}}">
         <meta name="twitter:card" content="summary">
+
+        <link rel="canonical" href="{{.SiteURL}}">
     {{end}}
     <link rel="icon" type="image/x-icon" href="/public/assets/favicon.ico">
     <link rel="icon" type="image/png" sizes="32x32" href="/public/assets/favicon-32x32.png">
@@ -49,6 +54,27 @@
     <link href="{{cacheBusterURL "/public/css/public.min.css"}}" rel="stylesheet">
     <!-- Dynamic Theme Palette -->
     <link href="{{themeURL .PublicTheme}}" rel="stylesheet">
+    {{if .Post}}
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BlogPosting",
+      "headline": "{{.Post.Title}}",
+      "image": "{{.MetaImageURL}}",
+      "datePublished": "{{.Post.CreatedAt.Format "2006-01-02T15:04:05Z07:00"}}",
+      "dateModified": "{{.Post.UpdatedAt.Format "2006-01-02T15:04:05Z07:00"}}",
+      "author": {
+        "@type": "Person",
+        "name": "{{.Post.Author.Name}}"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "{{.SiteTitle}}"
+      },
+      "description": "{{.Post.MetaDescription}}"
+    }
+    </script>
+    {{end}}
 </head>
 <body>
     <div class="container public-container">

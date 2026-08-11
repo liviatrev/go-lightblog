@@ -15,10 +15,10 @@
     <!-- Meta Info (Author & Date) -->
     <div class="d-flex align-items-center mb-4 text-muted small">
         <div class="bg-secondary text-white rounded-circle d-flex justify-content-center align-items-center me-2 author-avatar">
-            {{if .Post.Author.Name}}{{slice .Post.Author.Name 0 1}}{{else}}?{{end}}
+            <a href="/author/{{.Post.Author.ID}}" class="text-decoration-none text-reset position-relative z-1">{{if .Post.Author.Name}}{{slice .Post.Author.Name 0 1}}{{else}}?{{end}}</a>
         </div>
         <div>
-            <span class="fw-bold text-dark">{{.Post.Author.Name}}</span> &nbsp;&middot;&nbsp; 
+            <span class="fw-bold text-dark"><a href="/author/{{.Post.Author.ID}}" class="text-decoration-none text-reset position-relative z-1">{{.Post.Author.Name}}</a></span> &nbsp;&middot;&nbsp; 
             <span>{{.Post.CreatedAt.Format "02 Jan 2006"}}</span>
         </div>
     </div>

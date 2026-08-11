@@ -1,4 +1,11 @@
 (function () {
+    var rawContentElement = document.getElementById('raw-content');
+    var editorContainer = document.getElementById('editor-container');
+
+    if (rawContentElement && editorContainer) {
+        editorContainer.innerHTML = rawContentElement.textContent; 
+    }
+
     var editor = SUNEDITOR.create(document.getElementById('editor-container'), {
         plugins: SUNEDITOR.plugins,
         width: '100%',
@@ -18,11 +25,6 @@
         ],
         placeholder: 'Start writing something amazing...'
     });
-
-    var rawContentElement = document.getElementById('raw-content');
-    if (rawContentElement) {
-        editor.setContents(rawContentElement.textContent);
-    }
 
     var hiddenContent = document.getElementById('hidden-content');
 
