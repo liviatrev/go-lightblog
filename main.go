@@ -8,6 +8,7 @@ import (
 	"io/fs"
 	"log"
 	"encoding/json"
+	"math"
 	"net"
 	"net/http"
 	"os"
@@ -121,6 +122,20 @@ func main() {
 		return utils.CacheBusterURL(path)
 	})
 
+	engine.AddFunc("readTime", func(content string) int {
+		// strings.Fields memecah teks berdasarkan spasi untuk menghitung jumlah kata
+		wordCount := len(strings.Fields(content))
+		
+		// Kecepatan baca rata-rata: 200 kata per menit
+		minutes := math.Ceil(float64(wordCount) / 200.0)
+		
+		// Pastikan tidak pernah mengembalikan 0 menit
+		if minutes < 1 {
+			return 1
+		}
+		return int(minutes)
+	})
+
 	// Initialize Fiber App
 	app := fiber.New(fiber.Config{
 		Views:       engine,
@@ -183,6 +198,9 @@ func main() {
 	app.Get("/search", handlers.SearchPosts)
 	// Dynamic Sitemap XML
 	app.Get("/sitemap.xml", handlers.Sitemap)
+	// RSS 2.0 Feed (served at both /feed.xml and /rss.xml)
+	app.Get("/feed.xml", handlers.HandleRSS)
+	app.Get("/rss.xml", handlers.HandleRSS)
 
 	// Archive Routes (Category, Tag, Author)
 	app.Get("/category/:slug", handlers.CategoryPosts)
@@ -204,7 +222,8 @@ func main() {
 	Disallow: /setup
 	Disallow: /search?*
 
-	Sitemap: %s/sitemap.xml`, baseURL)
+	Sitemap: %s/sitemap.xml
+	Feed: %s/feed.xml`, baseURL, baseURL)
 
 		c.Set("Content-Type", "text/plain")
 		return c.SendString(robotsContent)

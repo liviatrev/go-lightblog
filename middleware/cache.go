@@ -40,8 +40,8 @@ func CacheControl(c *fiber.Ctx) error {
 		return c.Next()
 	}
 
-	// Sitemap: browser 1 hour, CDN 1 day
-	if path == "/sitemap.xml" {
+	// Sitemap & RSS feed: browser 1 hour, CDN 1 day
+	if path == "/sitemap.xml" || path == "/feed.xml" || path == "/rss.xml" {
 		c.Set("Cache-Control", "public, max-age=3600, s-maxage=86400")
 		return c.Next()
 	}

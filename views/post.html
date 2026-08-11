@@ -19,7 +19,9 @@
             <a href="/author/{{.Post.Author.ID}}" class="text-decoration-none text-reset position-relative z-1">{{if .Post.Author.Name}}{{slice .Post.Author.Name 0 1}}{{else}}?{{end}}</a>
         </div>
         <div>
-            <span class="fw-bold text-dark"><a href="/author/{{.Post.Author.ID}}" class="text-decoration-none text-reset position-relative z-1">{{.Post.Author.Name}}</a></span> &nbsp;&middot;&nbsp; 
+            <span class="fw-bold text-dark"><a href="/author/{{.Post.Author.ID}}" class="text-decoration-none text-reset position-relative z-1">{{.Post.Author.Name}}</a></span> &nbsp;&middot;&nbsp;
+            <span class="text-muted"> ⏰ {{readTime .Post.Content}} min read </span>
+            &nbsp;&middot;&nbsp;
             <span>{{.Post.CreatedAt.Format "02 Jan 2006"}}</span>
         </div>
     </div>
