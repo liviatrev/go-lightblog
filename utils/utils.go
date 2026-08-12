@@ -187,6 +187,26 @@ func GetPublicTheme() string {
 	return "light"
 }
 
+// GetThemeColors returns the theme_color (primary) and background_color (body-bg)
+// for a given theme name, matching the CSS custom properties in public/css/themes/.
+// Falls back to the light theme colors if the theme is unknown.
+func GetThemeColors(theme string) (themeColor, bgColor string) {
+	switch theme {
+	case "ocean":
+		return "#0d6efd", "#f0f7f9"
+	case "forest":
+		return "#2d6a4f", "#f4f9f4"
+	case "sunset":
+		return "#e76f51", "#fff8f0"
+	case "midnight":
+		return "#5b9bd5", "#121a24"
+	case "royal":
+		return "#6f42c1", "#faf7ff"
+	default: // light
+		return "#0d6efd", "#ffffff"
+	}
+}
+
 // GetNavbarData gets Category and Static Page data for navigation menu
 func GetNavbarData() fiber.Map {
 	var categories []models.Category

@@ -46,6 +46,12 @@ func CacheControl(c *fiber.Ctx) error {
 		return c.Next()
 	}
 
+	// Dynamic manifest: short browser cache, CDN 1 day
+	if path == "/manifest.json" {
+		c.Set("Cache-Control", "public, max-age=60, s-maxage=86400")
+		return c.Next()
+	}
+
 	// Post and page routes: browser 1 hour, CDN 7 days
 	if strings.HasPrefix(path, "/post/") || strings.HasPrefix(path, "/page/") {
 		c.Set("Cache-Control", "public, max-age=3600, s-maxage=604800")

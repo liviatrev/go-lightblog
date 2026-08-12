@@ -139,6 +139,36 @@ func ReadPost(c *fiber.Ctx) error {
 	return c.Render("post", data, "layouts/public")
 }
 
+// Manifest serves a dynamic Web App Manifest with theme-matched colors.
+func Manifest(c *fiber.Ctx) error {
+	theme := utils.GetPublicTheme()
+	themeColor, bgColor := utils.GetThemeColors(theme)
+
+	manifest := fiber.Map{
+		"name":             utils.GetSiteTitle(),
+		"short_name":       "Go-LightBlog",
+		"start_url":        "/",
+		"display":          "standalone",
+		"theme_color":      themeColor,
+		"background_color": bgColor,
+		"icons": []fiber.Map{
+			{
+				"src":   "/public/assets/android-chrome-192x192.png",
+				"sizes": "192x192",
+				"type":  "image/png",
+			},
+			{
+				"src":   "/public/assets/android-chrome-512x512.png",
+				"sizes": "512x512",
+				"type":  "image/png",
+			},
+		},
+	}
+
+	c.Set("Content-Type", "application/manifest+json")
+	return c.JSON(manifest)
+}
+
 // SearchPosts handles article search by keyword
 func SearchPosts(c *fiber.Ctx) error {
 	query := strings.TrimSpace(c.Query("q"))

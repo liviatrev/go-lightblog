@@ -196,6 +196,8 @@ func main() {
 	app.Get("/api/thumb", handlers.ImageThumbProxy)
 	// Public Search Route
 	app.Get("/search", handlers.SearchPosts)
+	// Dynamic Web App Manifest (theme-aware colors)
+	app.Get("/manifest.json", handlers.Manifest)
 	// Dynamic Sitemap XML
 	app.Get("/sitemap.xml", handlers.Sitemap)
 	// RSS 2.0 Feed (served at both /feed.xml and /rss.xml)
