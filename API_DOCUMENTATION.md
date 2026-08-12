@@ -12,8 +12,11 @@ Dokumentasi ini menjelaskan secara lengkap seluruh endpoint API yang tersedia di
 5. [Endpoint Pengguna (User)](#5-endpoint-pengguna-user)
 6. [Endpoint Pengaturan (Settings)](#6-endpoint-pengaturan-settings)
 7. [Endpoint Artikel (Post)](#7-endpoint-artikel-post)
-8. [Endpoint Publik (Public Endpoints)](#8-endpoint-publik-public-endpoints)
-9. [Cache Control & CDN](#9-cache-control--cdn)
+8. [Endpoint SEO Generator](#8-endpoint-seo-generator)
+9. [Endpoint Upload Gambar](#9-endpoint-upload-gambar)
+10. [Endpoint Publik (Public Endpoints)](#10-endpoint-publik-public-endpoints)
+11. [Cache Control & CDN](#11-cache-control--cdn)
+12. [IndexNow Integration](#12-indexnow-integration)
 
 ---
 
@@ -121,6 +124,8 @@ curl -X POST http://localhost:5800/api/v1/admin/categories \
   }
 }
 ```
+
+> **Catatan**: Setelah kategori dibuat/diupdate, sistem secara otomatis melakukan **Cloudflare cache purge** untuk URL kategori dan homepage (jika Cloudflare diaktifkan), serta **purge sitemap.xml**.
 
 ### C. Mengupdate Kategori
 Memperbarui data kategori berdasarkan ID (bisa update nama, slug, atau keduanya).
@@ -262,6 +267,8 @@ curl -X POST http://localhost:5800/api/v1/admin/tags \
 }
 ```
 
+> **Catatan**: Setelah tag dibuat/diupdate, sistem secara otomatis melakukan **Cloudflare cache purge** untuk URL tag dan homepage (jika Cloudflare diaktifkan), serta **purge sitemap.xml**.
+
 ### C. Mengupdate Label
 Memperbarui data label berdasarkan ID.
 
@@ -331,7 +338,7 @@ Grup Endpoint: `/api/v1/admin/users`
 Akses: **admin** saja (Editor tidak diperbolehkan mengakses endpoint ini).
 
 ### A. Mendapatkan Semua Pengguna
-Mengambil daftar semua pengguna di database. Kolom password disembunyikan secara otomatis.
+Mengambil daftar semua pengguna di database. Kolom password dan API Key disembunyikan secara otomatis.
 
 *   **URL**: `/`
 *   **Method**: `GET`
@@ -450,7 +457,7 @@ curl -X PUT http://localhost:5800/api/v1/admin/users/3 \
 ```
 
 ### D. Menghapus Pengguna
-Menghapus data pengguna dari database (soft delete/hard delete tergantung ketersediaan GORM model config).
+Menghapus data pengguna dari database (soft delete karena model User memiliki `gorm.DeletedAt`).
 
 *   **URL**: `/:id`
 *   **Method**: `DELETE`
@@ -501,12 +508,21 @@ curl -X GET http://localhost:5800/api/v1/admin/settings \
     "site_headline": "Selamat Datang di LightBlog",
     "site_tagline": "Sederhana, Cepat, Modern",
     "upload_mode": "local",
+    "imagekit_private_key": "",
+    "imagekit_folder": "/lightblog",
+    "remark42_url": "http://127.0.0.1:8080",
+    "remark42_site_id": "lightblog-utama",
     "enable_gemini": "no",
+    "gemini_api_key": "",
+    "gemini_model": "gemini-flash-latest",
     "enable_cloudflare": "no",
     "cloudflare_api_key": "",
     "cloudflare_zone_id": "",
     "site_url": "",
-    "public_theme": "light"
+    "public_theme": "light",
+    "indexnow": "no",
+    "indexnow_key": "a1b2c3...",
+    "indexnow_submitted": "no"
   }
 }
 ```
@@ -522,6 +538,7 @@ Memperbarui satu atau beberapa pengaturan secara dinamis. Sistem menerapkan filt
 - `login_token`
 - `enable_cloudflare`, `cloudflare_api_key`, `cloudflare_zone_id`, `site_url`
 - `public_theme`
+- `indexnow`, `indexnow_key`
 
 *   **URL**: `/`
 *   **Method**: `PUT`
@@ -538,7 +555,8 @@ Memperbarui satu atau beberapa pengaturan secara dinamis. Sistem menerapkan filt
       "enable_cloudflare": "yes",
       "cloudflare_api_key": "abc123...",
       "cloudflare_zone_id": "zone-id-123",
-      "site_url": "https://myblog.com"
+      "site_url": "https://myblog.com",
+      "indexnow": "yes"
     }
     ```
 
@@ -639,6 +657,8 @@ Membuat artikel baru. Endpoint ini menerima input berupa **multipart/form-data**
 
 Jika fitur **AI SEO (Gemini)** diaktifkan pada sistem (`enable_gemini = yes` dan `gemini_api_key` terisi), sistem akan secara otomatis memicu AI untuk memproses konten artikel dan menggenerate `MetaTitle`, `MetaDescription`, dan `TargetKeyword` yang relevan secara internal.
 
+Jika field `cover` tidak diunggah, sistem akan **otomatis menggenerate cover image** berukuran 1200x630 piksel dengan judul artikel yang ditampilkan di atasnya (menggunakan `default-cover.jpg` sebagai background).
+
 *   **URL**: `/`
 *   **Method**: `POST`
 *   **Headers**: 
@@ -650,7 +670,7 @@ Jika fitur **AI SEO (Gemini)** diaktifkan pada sistem (`enable_gemini = yes` dan
     *   `category_id` (integer, opsional): ID kategori tujuan.
     *   `tags` (string, opsional): Daftar ID label dipisahkan koma, contoh: `1,2,5`.
     *   `isDraft` (string, opsional, "true"/"false"): Simpan sebagai draf atau langsung publish.
-    *   `cover` (file, opsional): File gambar cover artikel (PNG, JPG, WebP).
+    *   `cover` (file, opsional): File gambar cover artikel (PNG, JPG, WebP, GIF, BMP).
     *   `seo_title` (string, opsional): Meta title kustom (digunakan jika AI mati).
     *   `seo_description` (string, opsional): Meta description kustom.
     *   `seo_keywords` (string, opsional): Target keyword kustom.
@@ -714,8 +734,15 @@ curl -X POST http://localhost:5800/api/v1/admin/posts \
 }
 ```
 
+> **Catatan**: Setelah artikel dibuat, sistem secara otomatis:
+> - Melakukan **Cloudflare cache purge** untuk URL post, kategori, semua tag, dan homepage.
+> - **Purge sitemap.xml**.
+> - **Submit URL ke IndexNow** (jika `indexnow = yes` dan artikel bukan draft).
+
 ### C. Mengupdate Artikel (Partial Update)
 Memperbarui data artikel secara sebagian. Menggunakan **multipart/form-data** agar tetap dapat melakukan update file cover baru secara opsional. Kirimkan parameter yang ingin diubah saja.
+
+Jika judul diubah, slug akan digenerate ulang secara otomatis dan **SlugRedirect** akan dibuat untuk mengarahkan slug lama ke slug baru (301 redirect).
 
 *   **URL**: `/:id`
 *   **Method**: `PUT`
@@ -809,9 +836,91 @@ curl -X DELETE http://localhost:5800/api/v1/admin/posts/13 \
 }
 ```
 
+> **Catatan**: Setelah artikel dihapus, sistem melakukan **Cloudflare cache purge** dan **submit URL ke IndexNow** agar search engine menghapus URL tersebut dari index.
+
 ---
 
-## 8. Endpoint Publik (Public Endpoints)
+## 8. Endpoint SEO Generator
+
+Grup Endpoint: `/seo/generate`  
+Akses: **admin**, **editor** (melalui session login, bukan Bearer Token)
+
+Endpoint ini digunakan untuk menggenerate metadata SEO (MetaTitle, MetaDescription, TargetKeyword) menggunakan **Google Gemini AI** berdasarkan konten artikel yang dikirim.
+
+*   **URL**: `/seo/generate`
+*   **Method**: `POST`
+*   **Headers**: 
+    *   `Content-Type: application/json`
+    *   Session cookie (harus login terlebih dahulu)
+*   **Body**:
+    ```json
+    {
+      "content": "<p>Konten artikel yang akan dianalisis oleh AI...</p>"
+    }
+    ```
+
+#### Contoh Request (curl)
+```bash
+curl -X POST http://localhost:5800/seo/generate \
+  -H "Content-Type: application/json" \
+  -b "session_cookie=..." \
+  -d '{
+    "content": "<p>Go adalah bahasa pemrograman yang dikembangkan oleh Google...</p>"
+  }'
+```
+
+#### Contoh Response (200 OK)
+```json
+{
+  "meta_title": "Panduan Lengkap Belajar Go untuk Pemula",
+  "meta_description": "Pelajari bahasa pemrograman Go dari dasar hingga mahir dengan panduan lengkap ini.",
+  "target_keyword": "belajar go, golang tutorial"
+}
+```
+
+#### Status Gagal Terkait:
+- `400 Bad Request`: Format JSON tidak valid.
+- `500 Internal Server Error`: Gemini API Key tidak dikonfigurasi, atau AI gagal merespons.
+
+---
+
+## 9. Endpoint Upload Gambar
+
+Grup Endpoint: `/api/upload`  
+Akses: **admin**, **editor** (melalui session login, bukan Bearer Token)
+
+Endpoint ini digunakan untuk mengunggah gambar dari editor WYSIWYG (SunEditor) ke penyimpanan lokal atau ImageKit CDN.
+
+*   **URL**: `/api/upload`
+*   **Method**: `POST`
+*   **Headers**: 
+    *   `Content-Type: multipart/form-data`
+    *   Session cookie (harus login terlebih dahulu)
+*   **Form Parameters**:
+    *   `image` (file, wajib): File gambar yang akan diunggah (PNG, JPG, WebP, GIF, BMP).
+
+#### Contoh Request (curl)
+```bash
+curl -X POST http://localhost:5800/api/upload \
+  -H "Content-Type: multipart/form-data" \
+  -b "session_cookie=..." \
+  -F "image=@/path/ke/gambar.jpg"
+```
+
+#### Contoh Response (200 OK)
+```json
+{
+  "success": true,
+  "url": "/public/uploads/gambar_1712345678.jpg"
+}
+```
+
+#### Status Gagal Terkait:
+- `500 Internal Server Error`: Gagal mengunggah ke CDN atau penyimpanan lokal.
+
+---
+
+## 10. Endpoint Publik (Public Endpoints)
 
 Endpoint di bawah ini dapat diakses oleh siapa saja tanpa membutuhkan autentikasi Bearer Token.
 
@@ -822,7 +931,7 @@ Menghasilkan atau menyajikan thumbnail gambar berukuran kustom secara instan dan
 *   **Method**: `GET`
 *   **Query Parameters**:
     *   `src` (string, wajib): Path relatif/absolut dari file gambar asli di server (contoh: `/public/uploads/cover.png`).
-    *   `w` (integer, opsional, default: 600): Lebar (width) piksel thumbnail yang diinginkan.
+    *   `w` (integer, opsional, default: 600, max: 2000): Lebar (width) piksel thumbnail yang diinginkan.
     *   `f` (string, opsional, "jpg" atau "webp", default: "jpg"): Format file output target.
 
 #### Contoh Request (Browser atau curl)
@@ -843,10 +952,29 @@ Content-Length: 12542
 - `403 Forbidden`: Jika file asal berada di luar direktori yang diizinkan (Proteksi path traversal).
 - `404 Not Found`: Jika file asal gambar (`src`) tidak ditemukan di disk server.
 - `400 Bad Request`: Jika parameter format atau dimensi terlalu ekstrim / tidak didukung.
+- `500 Internal Server Error`: Gagal memproses thumbnail.
+
+### B. Halaman Publik (SSR)
+
+| Route | Method | Deskripsi |
+| :--- | :--- | :--- |
+| `/` | `GET` | Homepage dengan daftar artikel terbaru (pagination). |
+| `/post/:slug` | `GET` | Halaman detail artikel. |
+| `/page/:slug` | `GET` | Halaman statis (menggunakan handler yang sama dengan post). |
+| `/search?q=:query` | `GET` | Pencarian artikel berdasarkan judul, meta description, atau konten. |
+| `/category/:slug` | `GET` | Arsip artikel berdasarkan kategori. |
+| `/tag/:slug` | `GET` | Arsip artikel berdasarkan tag. |
+| `/author/:id` | `GET` | Arsip artikel berdasarkan penulis. |
+| `/manifest.json` | `GET` | Web App Manifest dinamis dengan warna tema. |
+| `/sitemap.xml` | `GET` | Sitemap XML dinamis. |
+| `/feed.xml` | `GET` | RSS 2.0 Feed (20 artikel terbaru). |
+| `/rss.xml` | `GET` | Alias dari `/feed.xml`. |
+| `/:key.txt` | `GET` | File verifikasi IndexNow key. |
+| `/robots.txt` | `GET` | Robots.txt dinamis. |
 
 ---
 
-## 9. Cache Control & CDN
+## 11. Cache Control & CDN
 
 Aplikasi **go-lightblog** menerapkan middleware `CacheControl` secara global yang
 mengatur header `Cache-Control` berdasarkan jenis route. Ini memungkinkan
@@ -865,6 +993,8 @@ tidak tersimpan di cache.
 | `/author/:id` | `public, max-age=60, s-maxage=86400` | Browser cache 1 menit, CDN cache 1 hari |
 | `/post/:slug` | `public, max-age=3600, s-maxage=604800` | Browser cache 1 jam, CDN cache 7 hari |
 | `/page/:slug` | `public, max-age=3600, s-maxage=604800` | Browser cache 1 jam, CDN cache 7 hari |
+| `/sitemap.xml`, `/feed.xml`, `/rss.xml` | `public, max-age=3600, s-maxage=86400` | Browser cache 1 jam, CDN cache 1 hari |
+| `/manifest.json` | `public, max-age=60, s-maxage=86400` | Browser cache 1 menit, CDN cache 1 hari |
 | `/api/*` | `no-store` | REST-API tidak pernah di-cache |
 | `/dashboard`, `/posts/*`, `/categories`, `/tags`, `/settings`, `/users`, `/login-*`, `/setup`, `/logout`, `/seo/*` | `no-store` | Dashboard & admin routes tidak pernah di-cache |
 | Semua route lain (fallthrough) | `no-cache` | Tidak ada cache yang diterapkan |
@@ -880,10 +1010,35 @@ ketika terjadi perubahan data:
   dalam satu request.
 - **Create / Edit Category**: purge URL kategori dan homepage.
 - **Create / Edit Tag**: purge URL tag dan homepage.
+- **Delete Post**: purge URL post, kategori, semua tag, dan homepage.
+- **Sitemap Update**: purge URL sitemap.xml.
 
 > **Catatan**: Purge dilakukan secara asynchronous (non-blocking) sehingga
 > tidak menghambat respons API. Jika konfigurasi Cloudflare tidak lengkap,
 > purge akan dilewati tanpa error.
+
+---
+
+## 12. IndexNow Integration
+
+**go-lightblog** mendukung protokol **IndexNow** untuk memberi tahu search engine
+(Bing, Yandex, dll.) tentang URL baru atau yang berubah secara instan.
+
+### Konfigurasi
+Aktifkan melalui pengaturan:
+- `indexnow` = `"yes"` untuk mengaktifkan.
+- `indexnow_key` = key verifikasi (otomatis digenerate saat instalasi, 80-128 karakter alfanumerik).
+
+### File Verifikasi
+File verifikasi tersedia di: `/{indexnow_key}.txt`
+- Jika key di URL tidak cocok dengan key yang dikonfigurasi, akan mengembalikan `404 Not Found`.
+
+### Perilaku Otomatis
+- **Saat IndexNow diaktifkan pertama kali**: Sistem mengirim homepage URL ke IndexNow (hanya sekali, ditandai dengan `indexnow_submitted = yes`).
+- **Saat artikel dibuat/diupdate (bukan draft)**: URL artikel dikirim ke IndexNow.
+- **Saat artikel dihapus**: URL artikel dikirim ke IndexNow agar search engine menghapusnya dari index.
+
+> **Catatan**: Semua submission dilakukan secara asynchronous (non-blocking) dan membutuhkan `site_url` yang valid.
 
 ---
 
