@@ -579,3 +579,32 @@ Article Content:
 
 	return nil, fmt.Errorf("empty AI response")
 }
+
+func GeneratePaginationURLs(baseURL string, currentPage int, totalPages int) (string, string) {
+	var prevURL, nextURL string
+
+	// Closure kecil untuk menyusun string URL dengan aman
+	buildURL := func(page int) string {
+		if page == 1 {
+			return baseURL // Jika halaman 1, kembalikan URL bersih (tanpa ?page=1)
+		}
+		
+		// Cek apakah baseURL sudah mengandung parameter (misal: /search?q=AI)
+		separator := "?"
+		if strings.Contains(baseURL, "?") {
+			separator = "&"
+		}
+		
+		return fmt.Sprintf("%s%spage=%d", baseURL, separator, page)
+	}
+
+	if currentPage > 1 {
+		prevURL = buildURL(currentPage - 1)
+	}
+	
+	if currentPage < totalPages {
+		nextURL = buildURL(currentPage + 1)
+	}
+
+	return prevURL, nextURL
+}

@@ -53,6 +53,7 @@ func Home(c *fiber.Ctx) error {
 	data["HasNext"] = page < totalPages
 	data["PrevPage"] = page - 1
 	data["NextPage"] = page + 1
+	data["PrevURL"], data["NextURL"] = utils.GeneratePaginationURLs("/", page, totalPages)
 
 	return c.Render("home", data, "layouts/public")
 }
@@ -213,6 +214,7 @@ func SearchPosts(c *fiber.Ctx) error {
 	data["PrevPage"] = page - 1
 	data["NextPage"] = page + 1
 	data["NoIndex"] = true
+	data["PrevURL"], data["NextURL"] = utils.GeneratePaginationURLs("/search?q="+query, page, totalPages)
 
 	return c.Render("search", data, "layouts/public")
 }
@@ -253,6 +255,7 @@ func CategoryPosts(c *fiber.Ctx) error {
 	data["NextPage"] = page + 1
 	// We use an extra parameter for pagination link to match current URL
 	data["PaginationURL"] = "/category/" + slug
+	data["PrevURL"], data["NextURL"] = utils.GeneratePaginationURLs(data["PaginationURL"].(string), page, totalPages)
 
 	return c.Render("archive", data, "layouts/public")
 }
@@ -294,6 +297,7 @@ func TagPosts(c *fiber.Ctx) error {
 	data["PrevPage"] = page - 1
 	data["NextPage"] = page + 1
 	data["PaginationURL"] = "/tag/" + slug
+	data["PrevURL"], data["NextURL"] = utils.GeneratePaginationURLs(data["PaginationURL"].(string), page, totalPages)
 
 	return c.Render("archive", data, "layouts/public")
 }
@@ -332,6 +336,7 @@ func AuthorPosts(c *fiber.Ctx) error {
 	data["PrevPage"] = page - 1
 	data["NextPage"] = page + 1
 	data["PaginationURL"] = "/author/" + id
+	data["PrevURL"], data["NextURL"] = utils.GeneratePaginationURLs(data["PaginationURL"].(string), page, totalPages)
 
 	return c.Render("archive", data, "layouts/public")
 }

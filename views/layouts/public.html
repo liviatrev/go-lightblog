@@ -79,6 +79,14 @@
     {{ if .NoIndex }}
     <meta name="robots" content="noindex, nofollow">
     {{end}}
+    <!-- Pagination SEO -->
+    {{if .PrevURL}}
+    <link rel="prev" href="{{.PrevURL}}">
+    {{end}}
+    
+    {{if .NextURL}}
+    <link rel="next" href="{{.NextURL}}">
+    {{end}}
 </head>
 <body>
     <div class="container public-container">
