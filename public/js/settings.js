@@ -37,6 +37,20 @@ document.getElementById('cloudflareSwitch').addEventListener('change', function 
     }
 });
 
+document.getElementById('indexnowSwitch').addEventListener('change', function () {
+    var indexnowContainer = document.getElementById('indexnowContainer');
+    var indexnowHidden = document.getElementById('indexnow');
+    if (this.checked) {
+        indexnowContainer.classList.remove('d-none');
+        indexnowContainer.classList.add('d-flex');
+        indexnowHidden.value = 'yes';
+    } else {
+        indexnowContainer.classList.remove('d-flex');
+        indexnowContainer.classList.add('d-none');
+        indexnowHidden.value = 'no';
+    }
+});
+
 // Theme Picker: click a swatch to select the theme
 document.querySelectorAll('.theme-swatch').forEach(function (swatch) {
     swatch.addEventListener('click', function () {

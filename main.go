@@ -208,6 +208,9 @@ func main() {
 	app.Get("/category/:slug", handlers.CategoryPosts)
 	app.Get("/tag/:slug", handlers.TagPosts)
 	app.Get("/author/:id", handlers.AuthorPosts)
+	// IndexNow key verification file route: /{indexnow_key}.txt
+	app.Get("/:key.txt", handlers.IndexNowKeyFile)
+
 	// Route untuk robots.txt
 	app.Get("/robots.txt", func(c *fiber.Ctx) error {
 		// Ambil domain dinamis atau dari pengaturan site_url

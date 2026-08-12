@@ -138,6 +138,11 @@ func ApiCreatePost(c *fiber.Ctx) error {
 		utils.PurgeSitemapCache()
 	}()
 
+	// Submit the post URL to IndexNow when it is published (not a draft).
+	if !post.IsDraft {
+		go utils.SubmitIndexNowURL(post)
+	}
+
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
 		"success": true,
 		"message": "Article published successfully!",
@@ -264,6 +269,11 @@ func ApiUpdatePost(c *fiber.Ctx) error {
 		utils.PurgeSitemapCache()
 	}()
 
+	// Submit the post URL to IndexNow when it is published (not a draft).
+	if !post.IsDraft {
+		go utils.SubmitIndexNowURL(post)
+	}
+
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"success": true,
 		"message": "Article updated partially successfully!",
@@ -299,6 +309,9 @@ func ApiDeletePost(c *fiber.Ctx) error {
 		}
 		utils.PurgeSitemapCache()
 	}()
+
+	// Submit the deleted post URL to IndexNow so search engines remove it.
+	go utils.SubmitIndexNowURL(post)
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"success": true,

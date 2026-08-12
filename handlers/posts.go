@@ -135,6 +135,11 @@ func ProcessCreatePost(c *fiber.Ctx) error {
 		utils.PurgeSitemapCache()
 	}()
 
+	// Submit the post URL to IndexNow when it is published (not a draft).
+	if !post.IsDraft {
+		go utils.SubmitIndexNowURL(post)
+	}
+
 	return c.Redirect("/posts")
 }
 
@@ -255,6 +260,11 @@ func ProcessEditPost(c *fiber.Ctx) error {
 		utils.PurgeSitemapCache()
 	}()
 
+	// Submit the post URL to IndexNow when it is published (not a draft).
+	if !post.IsDraft {
+		go utils.SubmitIndexNowURL(post)
+	}
+
 	return c.Redirect("/posts")
 }
 
@@ -280,6 +290,9 @@ func DeletePost(c *fiber.Ctx) error {
 		}
 		utils.PurgeSitemapCache()
 	}()
+
+	// Submit the deleted post URL to IndexNow so search engines remove it.
+	go utils.SubmitIndexNowURL(post)
 
 	return c.Redirect("/posts")
 }

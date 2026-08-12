@@ -1,7 +1,9 @@
 package database
 
 import (
+	"crypto/rand"
 	"log"
+	"math/big"
 	"time"
 
 	"go-lightblog/config"
@@ -11,6 +13,27 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
+
+// generateIndexNowKey creates a random alphanumeric key of 80-128 characters
+// (a-zA-Z0-9). Used to seed the indexnow_key setting on first run.
+func generateIndexNowKey() string {
+	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	length := 80 + int(randInt(49)) // 80..128
+	b := make([]byte, length)
+	for i := range b {
+		b[i] = charset[randInt(int64(len(charset)))]
+	}
+	return string(b)
+}
+
+// randInt returns a cryptographically secure random integer in [0, max).
+func randInt(max int64) int64 {
+	n, err := rand.Int(rand.Reader, big.NewInt(max))
+	if err != nil {
+		return 0
+	}
+	return n.Int64()
+}
 
 // DB is a global instance so it can be called from handlers/services
 var DB *gorm.DB
@@ -70,6 +93,9 @@ func Connect(dbPath string) {
 		{Key: "cloudflare_zone_id", Value: ""},
 		{Key: "site_url", Value: ""},
 		{Key: "public_theme", Value: "light"},
+		{Key: "indexnow", Value: "no"},
+		{Key: "indexnow_key", Value: generateIndexNowKey()},
+		{Key: "indexnow_submitted", Value: "no"},
 	}
 
 	// Loop to ensure every basic configuration has a row in the database

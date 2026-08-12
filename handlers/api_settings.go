@@ -67,6 +67,8 @@ func ApiUpdateSettings(c *fiber.Ctx) error {
 		"cloudflare_zone_id":   true,
 		"site_url":             true,
 		"public_theme":         true,
+		"indexnow":             true,
+		"indexnow_key":         true,
 	}
 
 	var updatedKeys []string

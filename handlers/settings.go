@@ -34,6 +34,8 @@ func SettingsView(c *fiber.Ctx) error {
 	siteHeadline := models.GetSetting(database.DB, "site_headline", "Explore Articles")
 	siteTagline := models.GetSetting(database.DB, "site_tagline", "A collection of the latest writings, notes, and insights.")
 	loginToken := models.GetSetting(database.DB, "login_token", "admin")
+	enableIndexNow := models.GetSetting(database.DB, "indexnow", "no")
+	indexNowKey := models.GetSetting(database.DB, "indexnow_key", "")
 
 	return c.Render("dashboard/settings", fiber.Map{
 		"Title":            "Settings",
@@ -61,6 +63,8 @@ func SettingsView(c *fiber.Ctx) error {
 		"SiteTagline":      siteTagline,
 		"EnableGemini":     enableGemini,
 		"LoginToken":       loginToken,
+		"EnableIndexNow":   enableIndexNow,
+		"IndexNowKey":      indexNowKey,
 	}, "layouts/main")
 }
 
@@ -116,13 +120,18 @@ func ProcessUpdatePassword(c *fiber.Ctx) error {
 }
 
 func ProcessUpdateIntegrations(c *fiber.Ctx) error {
-	keys := []string{"upload_mode", "imagekit_private_key", "imagekit_folder", "remark42_url", "remark42_site_id", "enable_gemini", "gemini_api_key", "gemini_model", "enable_cloudflare", "cloudflare_api_key", "cloudflare_zone_id", "site_url"}
+	keys := []string{"upload_mode", "imagekit_private_key", "imagekit_folder", "remark42_url", "remark42_site_id", "enable_gemini", "gemini_api_key", "gemini_model", "enable_cloudflare", "cloudflare_api_key", "cloudflare_zone_id", "site_url", "indexnow", "indexnow_key"}
 
 	for _, key := range keys {
 		database.DB.Save(&models.Setting{
 			Key:   key,
 			Value: c.FormValue(key),
 		})
+	}
+
+	// If IndexNow was just enabled, submit the homepage URL once.
+	if c.FormValue("indexnow") == "yes" {
+		go utils.SubmitIndexNowInitial()
 	}
 
 	return c.Redirect("/settings?msg=success")
