@@ -92,7 +92,8 @@ func ProcessCreatePost(c *fiber.Ctx) error {
 	slug := utils.GenerateUniqueSlug(title)
 
 	// Auto-generate a cover image when the user did not upload one.
-	if strings.TrimSpace(coverImage) == "" {
+	// Only applies to posts, not pages.
+	if postType == "post" && strings.TrimSpace(coverImage) == "" {
 		if coverURL, genErr := utils.GenerateCoverImage(slug, title); genErr == nil && coverURL != "" {
 			coverImage = coverURL
 		} else if genErr != nil {
@@ -211,10 +212,11 @@ func ProcessEditPost(c *fiber.Ctx) error {
 
 	// Keep existing cover unless the user provided a new one or the post
 	// has never had a cover (in which case auto-generate from the slug).
+	// Auto-generation only applies to posts, not pages.
 	incomingCover := c.FormValue("cover_image")
 	if strings.TrimSpace(incomingCover) != "" {
 		post.CoverImage = incomingCover
-	} else if strings.TrimSpace(post.CoverImage) == "" {
+	} else if post.Type == "post" && strings.TrimSpace(post.CoverImage) == "" {
 		if coverURL, genErr := utils.GenerateCoverImage(post.Slug, title); genErr == nil && coverURL != "" {
 			post.CoverImage = coverURL
 		} else if genErr != nil {

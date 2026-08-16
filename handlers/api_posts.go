@@ -53,6 +53,10 @@ func ApiCreatePost(c *fiber.Ctx) error {
 	categoryID := c.FormValue("category_id")
 	tagsInput := c.FormValue("tags")
 	isDraft := c.FormValue("isDraft") == "true"
+	postType := c.FormValue("type")
+	if postType == "" {
+		postType = "post"
+	}
 
 	if strings.TrimSpace(title) == "" || strings.TrimSpace(content) == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -66,6 +70,7 @@ func ApiCreatePost(c *fiber.Ctx) error {
 		Slug:       utils.GenerateSlug(title),
 		Content:    content,
 		IsDraft:    isDraft,
+		Type:       postType,
 		CategoryID: utils.ParseUint(categoryID),
 	}
 
@@ -74,8 +79,9 @@ func ApiCreatePost(c *fiber.Ctx) error {
 	coverURL, err := utils.ProcessUpload(c, "cover")
 	if err == nil && coverURL != "" {
 		post.CoverImage = coverURL
-	} else if strings.TrimSpace(post.CoverImage) == "" {
+	} else if post.Type == "post" && strings.TrimSpace(post.CoverImage) == "" {
 		// Auto-generate a cover image from the slug when no cover was uploaded.
+		// Only applies to posts, not pages.
 		if genURL, genErr := utils.GenerateCoverImage(post.Slug, title); genErr == nil && genURL != "" {
 			post.CoverImage = genURL
 		} else if genErr != nil {
@@ -202,10 +208,11 @@ func ApiUpdatePost(c *fiber.Ctx) error {
 	coverURL, errUpload := utils.ProcessUpload(c, "cover")
 	if errUpload == nil && coverURL != "" {
 		updateData["cover_image"] = coverURL
-	} else if strings.TrimSpace(post.CoverImage) == "" {
+	} else if post.Type == "post" && strings.TrimSpace(post.CoverImage) == "" {
 		// Auto-generate a cover image when the post has never had one and the
 		// user did not provide a new upload. Use the (possibly updated) title
 		// for the slug so the generated cover reflects the current title.
+		// Auto-generation only applies to posts, not pages.
 		genTitle := post.Title
 		if values, exists := form.Value["title"]; exists && len(values) > 0 && values[0] != "" {
 			genTitle = values[0]
