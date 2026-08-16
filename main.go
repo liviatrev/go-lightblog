@@ -274,6 +274,10 @@ func main() {
 	posts.Put("/:id", handlers.ApiUpdatePost)
 	posts.Delete("/:id", handlers.ApiDeletePost)
 
+	// 5. Image Upload (Cover & In-Content) via API Key (Admin & Editor)
+	upload := adminAPI.Group("/upload", middleware.RequireRole("admin", "editor"))
+	upload.Post("/", handlers.ApiUploadImage)
+
 	adminGroup := app.Group("/", middleware.RequireLogin)
 
 	adminGroup.Get("/dashboard", handlers.DashboardView)

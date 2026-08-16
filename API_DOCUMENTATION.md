@@ -918,6 +918,51 @@ curl -X POST http://localhost:5800/api/upload \
 #### Status Gagal Terkait:
 - `500 Internal Server Error`: Gagal mengunggah ke CDN atau penyimpanan lokal.
 
+### B. Upload Gambar via API Key (Cover & In-Content)
+
+Grup Endpoint: `/api/v1/admin/upload`  
+Akses: **admin**, **editor** (melalui Bearer Token)
+
+Endpoint ini digunakan untuk mengunggah gambar **cover image** maupun **in-content image** melalui REST API menggunakan API Key (Bearer Token). Endpoint menerima file dari field `image` (untuk in-content image) atau field `cover` (untuk cover image), sehingga satu endpoint dapat melayani kedua kebutuhan.
+
+*   **URL**: `/api/v1/admin/upload`
+*   **Method**: `POST`
+*   **Headers**: 
+    *   `Authorization: Bearer <API_KEY>`
+    *   `Content-Type: multipart/form-data`
+*   **Form Parameters**:
+    *   `image` (file, opsional): File gambar in-content yang akan diunggah (PNG, JPG, WebP, GIF, BMP).
+    *   `cover` (file, opsional): File gambar cover yang akan diunggah (PNG, JPG, WebP, GIF, BMP).
+
+> **Catatan**: Kirim salah satu field (`image` atau `cover`). Jika keduanya dikirim, field `image` yang diprioritaskan.
+
+#### Contoh Request (curl) - In-Content Image
+```bash
+curl -X POST http://localhost:5800/api/v1/admin/upload \
+  -H "Authorization: Bearer token_admin_atau_editor" \
+  -F "image=@/path/ke/gambar.jpg"
+```
+
+#### Contoh Request (curl) - Cover Image
+```bash
+curl -X POST http://localhost:5800/api/v1/admin/upload \
+  -H "Authorization: Bearer token_admin_atau_editor" \
+  -F "cover=@/path/ke/cover.jpg"
+```
+
+#### Contoh Response (200 OK)
+```json
+{
+  "success": true,
+  "url": "/public/uploads/gambar_1712345678.jpg"
+}
+```
+
+#### Status Gagal Terkait:
+- `401 Unauthorized`: Header `Authorization` tidak dikirim atau API Key salah/tidak terdaftar.
+- `403 Forbidden`: Pengguna dengan role selain `admin`/`editor` mencoba mengakses endpoint ini.
+- `500 Internal Server Error`: Gagal mengunggah ke CDN atau penyimpanan lokal.
+
 ---
 
 ## 10. Endpoint Publik (Public Endpoints)
