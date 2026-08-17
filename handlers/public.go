@@ -126,6 +126,7 @@ func ReadPost(c *fiber.Ctx) error {
 	data["SiteDescription"] = post.MetaDescription
 	data["SiteKeywords"] = post.TargetKeyword
 	data["Post"] = post
+	data["Type"] = post.Type
 	data["RelatedPosts"] = relatedPosts
 	data["MetaImageURL"] = metaImageURL
 	data["Remark42URL"] = remark42URL

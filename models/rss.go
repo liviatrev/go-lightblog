@@ -21,7 +21,7 @@ type RSSChannel struct {
 	Description   string    `xml:"description"`
 	Language      string    `xml:"language"`
 	LastBuildDate string    `xml:"lastBuildDate"`
-	AtomLink      string    `xml:"atom:link"`
+	AtomLink      AtomLink  `xml:"atom:link"`
 	Items         []RSSItem `xml:"item"`
 }
 
@@ -31,4 +31,10 @@ type RSS struct {
 	Version string     `xml:"version,attr"`
 	Xmlns   string     `xml:"xmlns:atom,attr"`
 	Channel RSSChannel `xml:"channel"`
+}
+
+type AtomLink struct {
+	Href string `xml:"href,attr"`
+	Rel  string `xml:"rel,attr"`
+	Type string `xml:"type,attr"`
 }

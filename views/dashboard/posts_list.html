@@ -20,7 +20,7 @@
             <tbody>
                 {{range .Posts}}
                 <tr>
-                    <td class="ps-4 fw-medium">{{.Title}} <br> <a href="/post/{{.Slug}}" target="_blank" rel="noopener noreferrer"><small class="text-muted fw-normal">/{{.Slug}}</small></a></td>
+                    <td class="ps-4 fw-medium">{{.Title}} <br> <a href="/{{if .eq .Type "post"}}post{{else}}page{{end}}/{{.Slug}}" target="_blank" rel="noopener noreferrer"><small class="text-muted fw-normal">/{{.Slug}}</small></a></td>
                     <td>
                         {{if .IsDraft}}
                             <span class="badge bg-secondary">Draft</span>

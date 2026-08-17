@@ -5,6 +5,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"time"
+	"strings"
 
 	"go-lightblog/database"
 	"go-lightblog/models"
@@ -47,13 +48,19 @@ func HandleRSS(c *fiber.Ctx) error {
 		lastBuild = posts[0].CreatedAt
 	}
 
+	selfURL := fmt.Sprintf("%s%s", baseURL, c.Path())
+
 	channel := models.RSSChannel{
 		Title:         siteTitle,
 		Link:          baseURL + "/",
 		Description:   siteDesc,
 		Language:      language,
 		LastBuildDate: lastBuild.Format(time.RFC1123Z),
-		AtomLink:      fmt.Sprintf("%s/feed.xml", baseURL),
+		AtomLink:      models.AtomLink{
+			Href: selfURL,
+			Rel:  "self",
+			Type: "application/rss+xml",
+		},
 		Items:         make([]models.RSSItem, 0, len(posts)),
 	}
 
@@ -64,21 +71,32 @@ func HandleRSS(c *fiber.Ctx) error {
 		item := models.RSSItem{
 			Title:       post.Title,
 			Link:        postLink,
-			Description: post.Content,
+			Description: post.MetaDescription,
 			PubDate:     post.CreatedAt.Format(time.RFC1123Z),
 			GUID:        postLink,
 			Author:      post.Author.Name,
 			Categories:  make([]string, 0),
 		}
 
+		seenCategories := make(map[string]bool)
 		// Add main category as a <category> element
 		if post.Category.Name != "" {
+			lowerName := strings.ToLower(post.Category.Name)
+			seenCategories[lowerName] = true
 			item.Categories = append(item.Categories, post.Category.Name)
 		}
 
 		// Add all tags as <category> elements
 		for _, tag := range post.Tags {
-			item.Categories = append(item.Categories, tag.Name)
+			if tag.Name == "" {
+				continue
+			}
+			lowerName := strings.ToLower(tag.Name)
+
+			if !seenCategories[lowerName] {
+				seenCategories[lowerName] = true
+				item.Categories = append(item.Categories, tag.Name)
+			}
 		}
 
 		channel.Items = append(channel.Items, item)
