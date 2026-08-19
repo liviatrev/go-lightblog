@@ -87,6 +87,7 @@
     {{if .NextURL}}
     <link rel="next" href="{{.NextURL}}">
     {{end}}
+    {{if .HeaderScript}}{{unescape .HeaderScript}}{{end}}
 </head>
 <body>
     <div class="container public-container">
@@ -159,5 +160,6 @@
     </div>
     <!-- Lightweight custom JS for navbar collapse & dropdown (replaces bootstrap.bundle.min.js ~80KB) -->
     <script src="{{cacheBusterURL "/public/js/nav.min.js"}}"></script>
+    {{if .FooterScript}}{{unescape .FooterScript}}{{end}}
 </body>
 </html>

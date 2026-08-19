@@ -69,6 +69,8 @@ func ApiUpdateSettings(c *fiber.Ctx) error {
 		"public_theme":         true,
 		"indexnow":             true,
 		"indexnow_key":         true,
+		"header_script":        true,
+		"footer_script":        true,
 	}
 
 	var updatedKeys []string

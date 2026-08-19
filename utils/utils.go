@@ -221,6 +221,8 @@ func GetNavbarData() fiber.Map {
 		"NavCategories": categories,
 		"NavPages":      pages,
 		"PublicTheme":   GetPublicTheme(),
+		"HeaderScript":  models.GetSetting(database.DB, "header_script", ""),
+		"FooterScript":  models.GetSetting(database.DB, "footer_script", ""),
 	}
 }
 

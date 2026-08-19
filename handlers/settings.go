@@ -36,6 +36,8 @@ func SettingsView(c *fiber.Ctx) error {
 	loginToken := models.GetSetting(database.DB, "login_token", "admin")
 	enableIndexNow := models.GetSetting(database.DB, "indexnow", "no")
 	indexNowKey := models.GetSetting(database.DB, "indexnow_key", "")
+	headerScript := models.GetSetting(database.DB, "header_script", "")
+	footerScript := models.GetSetting(database.DB, "footer_script", "")
 
 	return c.Render("dashboard/settings", fiber.Map{
 		"Title":            "Settings",
@@ -65,6 +67,8 @@ func SettingsView(c *fiber.Ctx) error {
 		"LoginToken":       loginToken,
 		"EnableIndexNow":   enableIndexNow,
 		"IndexNowKey":      indexNowKey,
+		"HeaderScript":     headerScript,
+		"FooterScript":     footerScript,
 	}, "layouts/main")
 }
 
@@ -120,7 +124,7 @@ func ProcessUpdatePassword(c *fiber.Ctx) error {
 }
 
 func ProcessUpdateIntegrations(c *fiber.Ctx) error {
-	keys := []string{"upload_mode", "imagekit_private_key", "imagekit_folder", "remark42_url", "remark42_site_id", "enable_gemini", "gemini_api_key", "gemini_model", "enable_cloudflare", "cloudflare_api_key", "cloudflare_zone_id", "site_url", "indexnow", "indexnow_key"}
+	keys := []string{"upload_mode", "imagekit_private_key", "imagekit_folder", "remark42_url", "remark42_site_id", "enable_gemini", "gemini_api_key", "gemini_model", "enable_cloudflare", "cloudflare_api_key", "cloudflare_zone_id", "site_url", "indexnow", "indexnow_key", "header_script", "footer_script"}
 
 	for _, key := range keys {
 		database.DB.Save(&models.Setting{

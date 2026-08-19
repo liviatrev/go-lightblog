@@ -27,6 +27,7 @@ Designed to run either as a traditional web-rendered blog or as a headless CMS w
     *   Fine-grained `Cache-Control` header middleware customized for static assets, dynamic templates, pages, and API endpoints.
     *   Async, URL-specific Cloudflare CDN cache purging triggered upon creating or modifying content.
 *   **🎨 Public Color Themes**: 6 beautiful built-in CSS themes (Light, Ocean, Forest, Sunset, Midnight Dark, and Royal Purple) based on Bootstrap 5.3 custom variables.
+*   **🧩 Custom Scripts Injection**: Inject custom HTML/JS scripts into the `<head>` (before `</head>`) and before `</body>` on all public pages via the admin settings. Perfect for Google Analytics, Search Console verification, chat widgets, and other third-party integrations.
 *   **✏️ Modern WYSIWYG Editor**: Uses the feature-rich SunEditor for editing posts in the administration panel.
 *   **🔗 IndexNow Integration**: Automatically submits new/updated/deleted post URLs to search engines (Bing, Yandex, etc.) for instant indexing.
 *   **🔀 Slug Redirect Support**: When a post slug changes, an automatic 301 redirect maps the old URL to the new one.

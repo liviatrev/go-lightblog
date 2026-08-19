@@ -193,6 +193,29 @@
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Custom Scripts (Header & Footer) -->
+                        <div class="col-md-12 mb-4">
+                            <div class="card shadow h-100">
+                                <div class="card-header bg-white pt-3 pb-2 border-bottom-0">
+                                    <h5 class="m-0">🧩 Custom Scripts (Header & Footer)</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row g-3">
+                                        <div class="col-12">
+                                            <label class="form-label text-muted">Header Script</label>
+                                            <textarea name="header_script" class="form-control font-monospace" rows="5" placeholder="Paste header scripts here (e.g. Google Analytics, Search Console verification)">{{.HeaderScript}}</textarea>
+                                            <div class="form-text mt-1">Embedded before the closing head tag on all public pages.</div>
+                                        </div>
+                                        <div class="col-12">
+                                            <label class="form-label text-muted">Footer Script</label>
+                                            <textarea name="footer_script" class="form-control font-monospace" rows="5" placeholder="Paste footer scripts here (e.g. chat widgets, analytics)">{{.FooterScript}}</textarea>
+                                            <div class="form-text mt-1">Embedded before the closing body tag on all public pages.</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="row">

@@ -522,7 +522,9 @@ curl -X GET http://localhost:5800/api/v1/admin/settings \
     "public_theme": "light",
     "indexnow": "no",
     "indexnow_key": "a1b2c3...",
-    "indexnow_submitted": "no"
+    "indexnow_submitted": "no",
+    "header_script": "",
+    "footer_script": ""
   }
 }
 ```
@@ -539,6 +541,7 @@ Memperbarui satu atau beberapa pengaturan secara dinamis. Sistem menerapkan filt
 - `enable_cloudflare`, `cloudflare_api_key`, `cloudflare_zone_id`, `site_url`
 - `public_theme`
 - `indexnow`, `indexnow_key`
+- `header_script`, `footer_script`
 
 *   **URL**: `/`
 *   **Method**: `PUT`

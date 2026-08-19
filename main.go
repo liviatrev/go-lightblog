@@ -144,7 +144,7 @@ func main() {
 	})
 
 	app.Use(logger.New(logger.Config{
-        Format: "[${ip}]:${port} ${status} - ${method} ${path} | ${error}\n",
+        Format: "[${ip}] ${status} - ${method} ${path} | ${error}\n",
     }))
 
 	// Register middleware globally here
